@@ -686,9 +686,11 @@ export function openMenu(tab = 'misiones') {
   let cur = tab;
   return ui().panel('Menú', (body, re) => {
     const tabs = el('div', 'tabs');
+    const mapBtn = el('button', 'tab', '🗺️ Mapa'); mapBtn.onclick = async () => { ui().closePanel(); const { openFullMap } = await import('./map.js'); openFullMap(); };
     for (const [k, n] of [['misiones', '📜 Misiones'], ['mochila', '🎒 Mochila'], ['relaciones', '💞 Relaciones'], ['trabajo', '💼 Trabajo'], ['mejoras', '🏠 Mejoras'], ['ajustes', '⚙️ Ajustes']]) {
       const b = el('button', `tab${k === cur ? ' on' : ''}`, n); b.onclick = () => { cur = k; sfx('click'); re(); }; tabs.appendChild(b);
     }
+    tabs.appendChild(mapBtn);
     body.appendChild(tabs);
     const box = el('div', 'tabbody'); body.appendChild(box);
     ({ misiones: tabQuests, mochila: tabBag, relaciones: tabRel, trabajo: tabJob, mejoras: tabUpg, ajustes: tabSettings })[cur](box, re);

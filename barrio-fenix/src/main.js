@@ -15,6 +15,7 @@ import { initAudio, playMusic, sfx, applyVolumes } from './audio.js';
 import { buildInteractables, talkTo, openMenu, buildingOpen, dailyTick } from './gameplay.js';
 import { isNight, hourFloat } from './time.js';
 import { toon } from './toon.js';
+import { MiniMap, openFullMap } from './map.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -188,6 +189,8 @@ function startGame() {
   window.addEventListener('pagehide', () => saveState());
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
   $('hud').classList.add('show');
+  G.minimap = new MiniMap();
+  window.addEventListener('keydown', (e) => { if (e.code === 'KeyM' && !G.busy) openFullMap(); });
   G.ui.updateHud();
   updateTracker(); updateIndicators();
   applyVolumes();
@@ -288,6 +291,7 @@ function loop() {
     }
   });
   updateMarker(dt);
+  G.minimap.update(dt);
   // ticks lentos
   hudT += dt; hoursT += dt; saveT += dt;
   if (hudT > 1) { hudT = 0; G.ui.updateHud(); dailyTick(); }
