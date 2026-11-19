@@ -5,8 +5,8 @@ import { GLTFLoader } from '../vendor/GLTFLoader.js';
 import { VRMLoaderPlugin, VRMUtils } from '../vendor/three-vrm.module.min.js';
 
 // Busca el modelo de cada personaje: basta con subir assets/characters/<id>.vrm (p. ej. lucia.vrm).
-// Si no existe, el personaje usa el modelo procedural. Lucía usa el de prueba mientras no exista el suyo.
-const FALLBACK = { lucia: 'assets/characters/prueba.vrm' };
+// Si no existe, el personaje usa el modelo procedural.
+const FALLBACK = {};
 async function exists(url) {
   try { const r = await fetch(url, { method: 'HEAD', cache: 'no-cache' }); return r.ok; } catch { return false; }
 }
