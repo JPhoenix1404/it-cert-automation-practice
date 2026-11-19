@@ -12,7 +12,7 @@ export const EXTRA = {
       { line: 'A veces pienso en irme a otra ciudad. Luego miro por la ventana y te veo. Y ya no pienso tanto.', opts: [['atrevido', 'Pues mírame más a menudo.'], ['sincero', 'Me alegro de ser una razón para quedarte.'], ['seguro', 'No te vas a ir. Aquí está tu mejor proyecto.']] },
       { line: 'He empezado a dibujar una casa nueva. Tiene dos estudios. No me preguntes para quién es el segundo.', opts: [['dulce', '¿Tendrá ventanas grandes? Para verte trabajar.'], ['atrevido', 'Prefiero un solo estudio. Y una mesa muy grande.'], ['gracioso', '¿El segundo es para Neko-san?']] },
     ],
-    gift: { love: '¿Una suculenta? Vive con poca agua y mucha luz. Como yo. ...Gracias, de verdad.', like: 'Qué detalle. Va directo a la mesa de dibujo.', neutral: 'Ah. Gracias. Le buscaré un sitio... en algún sitio.', hate: '¿Cerveza? ¿Me has visto alguna vez con una cerveza? Exacto.' },
+    gift: { love: '¿Una suculenta? Vive con poca agua y mucha luz. Como yo. ...Gracias, de verdad.', like: 'Qué detalle. No hacía falta... pero me gusta.', neutral: 'Ah. Gracias. Le buscaré un sitio... en algún sitio.', hate: '¿Cerveza? ¿Me has visto alguna vez con una cerveza? Exacto.' },
     bye: ['Hasta luego. Y arregla esa persiana.', 'Nos vemos, vecin{o}.'],
     afterDate: ['Ha estado bien. Muy bien. No te lo creas mucho.', 'Repetiremos. Lo tengo en la agenda. A lápiz, de momento.'],
     morning: ['Buenos días. Has dejado la toalla en el suelo. Te perdono. Esta vez.', 'He redibujado tu salón mientras dormías. No te enfades: queda mejor.', 'Buenos días. El café está hecho. Y no, no te lo he puesto con azúcar. Aprende.'],

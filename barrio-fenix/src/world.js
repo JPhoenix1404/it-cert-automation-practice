@@ -767,7 +767,7 @@ export class World {
     this.glow.windows.emissiveIntensity = glow * 0.9;
     this.glow.windows.color.setHex(glow > 0.3 ? 0xffe0a0 : 0x9ad0ff);
     // luz cálida de interior cuando el jugador está dentro de un edificio
-    const inside = Object.values(this.covers).some((c) => c.opacity < 0.5);
+    const inside = !!playerPos && Object.values(BUILDINGS).some((b) => { const r = b.rect; return playerPos.x > r[0] - 0.2 && playerPos.x < r[2] + 0.2 && playerPos.z > r[1] - 0.2 && playerPos.z < r[3] + 0.6; });
     this.interiorK = (this.interiorK || 0) + ((inside ? 1 : 0) - (this.interiorK || 0)) * Math.min(1, dt * 4);
     const ik = this.interiorK * Math.max(0.35, night);
     if (ik > 0.01) {

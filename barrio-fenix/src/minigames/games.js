@@ -149,7 +149,7 @@ const street = {
     const petals = opts.context === 'petals';
     const items = petals ? ['🌸'] : ['🍊', '🍊', '🍎', '🥖', '🥚', '🍋', '🥫', '🧀'];
     const basket = { x: W / 2, y: H - 90, w: 150 + attr('destreza') * 6 };
-    const falling = []; let spawnT = 0, caught = 0, spawned = 0, missed = 0;
+    const falling = []; let spawnT = 0, caught = 0, spawned = 0, missed = 0, dropped = 0;
     const parts = new Particles();
     const duration = 30;
     return {
@@ -167,7 +167,7 @@ const street = {
           f.y += f.vy * dt; f.vy += (petals ? 10 : 120) * dt; f.rot += dt * 2;
           if (petals) f.x += Math.sin(t * 2 + f.sway) * 60 * dt + f.vx * dt;
           if (!f.gone && f.y > basket.y - 20 && f.y < basket.y + 25 && Math.abs(f.x - basket.x) < basket.w / 2) { f.gone = true; caught++; sfx('catch'); parts.burst(f.x, basket.y - 10, 8, petals ? '#ffb7cc' : '#ffd34d', 150, 0.5, 4); }
-          if (!f.gone && f.y > H + 20) { f.gone = true; missed += f.e === '🥚' ? 2 : 1; if (!petals) sfx('error'); }
+          if (!f.gone && f.y > H + 20) { f.gone = true; missed += f.e === '🥚' ? 2 : 1; dropped++; if (!petals) sfx('error'); }
         }
         for (let i = falling.length - 1; i >= 0; i--) if (falling[i].gone) falling.splice(i, 1);
       },
@@ -184,7 +184,7 @@ const street = {
         parts.draw(g);
       },
       scoreText() { return `Atrapados: ${caught}`; },
-      result() { const ratio = spawned ? caught / Math.max(1, caught + missed) : 0; return { ratio: ratio * 1.04, score: caught * 50, summary: `Atrapados: <b>${caught}</b> · Al suelo: <b>${missed}</b>` }; },
+      result() { const ratio = spawned ? caught / Math.max(1, caught + missed) : 0; return { ratio: ratio * 1.04, score: caught * 50, summary: `Atrapados: <b>${caught}</b> · Al suelo: <b>${dropped}</b>` }; },
     };
   },
 };

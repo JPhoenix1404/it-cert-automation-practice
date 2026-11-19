@@ -4,7 +4,7 @@ import { QUESTS, QUEST_ORDER } from './data/quests.js';
 import { CHARACTERS } from './data/characters.js';
 import { addDeuros, addFenixios, addItem, addAttr } from './state.js';
 import { addAff } from './relations.js';
-import { OBJ, SPOTS, zoneAt } from './world.js';
+import { OBJ, SPOTS, BUILDINGS, zoneAt } from './world.js';
 import { BIOMES } from './data/items.js';
 import { hourFloat, inHours } from './time.js';
 import { sfx } from './audio.js';
@@ -102,6 +102,11 @@ export class Quests {
   }
   // Pista cuando el objetivo no está disponible ahora
   markerHint(marker) {
+    if (marker && marker.startsWith('obj:')) {
+      const o = OBJ[marker.slice(4)];
+      for (const [bid, b] of Object.entries(BUILDINGS)) { const r = b.rect; if (o && b.hours && o.x > r[0] && o.x < r[2] && o.z > r[1] && o.z < r[3] && !inHours(hourFloat(), b.hours[0], b.hours[1])) return `${b.name} abre a las ${String(b.hours[0]).padStart(2, '0')}:00 · echa una siesta`; }
+      return '';
+    }
     if (!marker || !marker.startsWith('npc:')) return '';
     const id = marker.slice(4), n = G.npcs.get(id);
     if (n && n.visible) {
