@@ -167,7 +167,7 @@ const street = {
           f.y += f.vy * dt; f.vy += (petals ? 10 : 120) * dt; f.rot += dt * 2;
           if (petals) f.x += Math.sin(t * 2 + f.sway) * 60 * dt + f.vx * dt;
           if (!f.gone && f.y > basket.y - 20 && f.y < basket.y + 25 && Math.abs(f.x - basket.x) < basket.w / 2) { f.gone = true; caught++; sfx('catch'); parts.burst(f.x, basket.y - 10, 8, petals ? '#ffb7cc' : '#ffd34d', 150, 0.5, 4); }
-          if (!f.gone && f.y > H + 20) { f.gone = true; missed++; if (!petals) sfx('error'); }
+          if (!f.gone && f.y > H + 20) { f.gone = true; missed += f.e === '🥚' ? 2 : 1; if (!petals) sfx('error'); }
         }
         for (let i = falling.length - 1; i >= 0; i--) if (falling[i].gone) falling.splice(i, 1);
       },
@@ -317,7 +317,7 @@ const rhythm = {
     const notes = []; let t0 = 2.0;
     const pattern = [0, 1, 2, 1, 0, 2, 1, 1, 0, 1, 2, 2, 1, 0, 0, 2];
     for (let i = 0, t = t0; t < 32; i++, t += beat * (i % 8 === 7 ? 1 : 0.5 + (i % 3 === 0 ? 0.5 : 0))) notes.push({ lane: pattern[i % pattern.length], t, hit: null });
-    let perfect = 0, good = 0, miss = 0, combo = 0, best = 0, flash = [0, 0, 0], label = null;
+    let perfect = 0, good = 0, miss = 0, strays = 0, combo = 0, best = 0, flash = [0, 0, 0], label = null;
     const parts = new Particles(); let now = 0;
     const win = 0.13 + attr('destreza') * 0.006;
     return {
@@ -329,6 +329,7 @@ const rhythm = {
         flash[lane] = 0.15; sfx(['note1', 'note2', 'note3'][lane]);
         let n = null, bd = 1;
         for (const q of notes) if (q.lane === lane && !q.hit) { const d = Math.abs(q.t - now); if (d < bd) { bd = d; n = q; } }
+        if (!n || bd >= win) { strays++; combo = 0; label = { s: 'FALLO', t: 0.4, lane }; return; }
         if (n && bd < win) {
           n.hit = bd < win * 0.45 ? 'perfect' : 'good';
           if (n.hit === 'perfect') perfect++; else good++;
@@ -355,7 +356,7 @@ const rhythm = {
         if (combo > 2) text(g, `Combo x${combo}`, W / 2, 40, 22, '#ffd37a');
       },
       scoreText() { return `Perfectos: ${perfect} · Fallos: ${miss}`; },
-      result() { const total = notes.length; const ratio = (perfect + good * 0.65) / total; return { ratio: ratio * 1.05, score: perfect * 100 + good * 60, summary: `Perfectos: <b>${perfect}</b> · Bien: <b>${good}</b> · Fallos: <b>${miss}</b> · Mejor combo: <b>${best}</b>` }; },
+      result() { const total = notes.length; const ratio = (perfect + good * 0.65) / (total + strays * 0.5); return { ratio: ratio * 1.05, score: perfect * 100 + good * 60, summary: `Perfectos: <b>${perfect}</b> · Bien: <b>${good}</b> · Fallos: <b>${miss + strays}</b> · Mejor combo: <b>${best}</b>` }; },
     };
   },
 };
@@ -368,7 +369,7 @@ const cooking = {
     const r = RECIPES[opts.recipe] || RECIPES.curry;
     let phase = 0, chops = 0, angle = 0, lastA = null, needle = 0, dir = 1, stopped = null, phaseT = 0, scores = [0, 0, 0];
     const parts = new Particles();
-    const chopTarget = 22, stirTarget = PI * 2 * 5;
+    const chopTarget = 16, stirTarget = PI * 2 * 5;
     const zone = 0.1 + attr('cocina') * 0.012, zc = rand(0.3, 0.7);
     const cx = W / 2, cy = H / 2 + 20;
     const PH = 8;
@@ -438,7 +439,8 @@ const barista = {
     const val = opts.context === 'valeria';
     const keys = Object.keys(ING);
     let orders = val ? [['expreso', 'expreso', 'avena', 'canela']] : Array.from({ length: 4 }, (_, i) => Array.from({ length: 3 + Math.min(2, i) }, () => pick(keys)));
-    let idx = 0, showT = val ? 0 : 3.2, cup = [], results = [], feedback = null;
+    const memo = (o) => 1.4 + o.length * 0.7;
+    let idx = 0, showT = val ? 0 : memo(orders[0]), cup = [], results = [], partial = [], feedback = null;
     const btns = keys.map((k, i) => ({ k, x: W * 0.1 + (i % 4) * W * 0.2 + W * 0.1, y: H * 0.62 + Math.floor(i / 4) * 110 }));
     const serve = { x: W - 130, y: H * 0.38, w: 200, h: 70 }, clear = { x: W - 130, y: H * 0.38 + 90, w: 200, h: 56 };
     const parts = new Particles();
@@ -450,6 +452,7 @@ const barista = {
         for (const b of btns) if (Math.hypot(b.x - x, b.y - y) < 50) { if (cup.length < 6) { cup.push(b.k); sfx('pop'); } return; }
         if (Math.abs(x - serve.x) < serve.w / 2 && Math.abs(y - serve.y) < serve.h / 2) {
           const ok = same(cup, orders[idx]); results.push(ok);
+          { const left = [...orders[idx]]; let hit = 0; for (const k of cup) { const j = left.indexOf(k); if (j >= 0) { left.splice(j, 1); hit++; } } partial.push(ok ? 1 : (hit / Math.max(cup.length, orders[idx].length)) * 0.7); }
           feedback = { ok, t: 0.9 }; sfx(ok ? 'fanfare' : 'bad');
           if (ok) parts.burst(W / 2, H * 0.32, 20, '#ffd34d', 260, 0.7, 6);
         }
@@ -458,7 +461,7 @@ const barista = {
       update(dt) {
         parts.update(dt);
         if (showT > 0) showT -= dt;
-        if (feedback) { feedback.t -= dt; if (feedback.t <= 0) { feedback = null; cup = []; idx++; if (idx >= orders.length) this.done = true; else showT = val ? 0 : 3.2; } }
+        if (feedback) { feedback.t -= dt; if (feedback.t <= 0) { feedback = null; cup = []; idx++; if (idx >= orders.length) this.done = true; else showT = val ? 0 : memo(orders[idx]); } }
       },
       draw(g) {
         g.fillStyle = '#f4e8dc'; g.fillRect(0, 0, W, H);
@@ -478,7 +481,7 @@ const barista = {
         parts.draw(g);
       },
       scoreText() { return `Aciertos: ${results.filter(Boolean).length}`; },
-      result() { const ok = results.filter(Boolean).length; const ratio = ok / orders.length; return { ratio: ratio * 1.02, score: ok * 300, summary: `Pedidos correctos: <b>${ok}/${orders.length}</b>`, extra: { exact: val && results[0] === true } }; },
+      result() { const ok = results.filter(Boolean).length; const ratio = partial.reduce((a, b) => a + b, 0) / orders.length; return { ratio: ratio * 1.02, score: ok * 300, summary: `Pedidos correctos: <b>${ok}/${orders.length}</b>`, extra: { exact: val && results[0] === true } }; },
     };
   },
 };

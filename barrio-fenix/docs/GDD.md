@@ -30,14 +30,14 @@ Te mudas a **Barrio Fénix**, un barrio pequeño con cerezos, farolillos y vecin
 - **Fases:** amanecer de 07:00 a 08:00, día de 08:00 a 18:00, atardecer de 18:00 a 20:00 y noche de 20:00 a 07:00.
 - **Saltar tiempo** (aumenta el desfase):
   - Siesta en el sofá: +2 h y +30 de energía.
-  - Dormir en la cama: hasta las 08:00 siguientes y energía al 100. Solo se puede dormir a partir de las 20:00 o con menos de 30 de energía.
+  - Dormir en la cama: hasta las 08:00 siguientes y energía al 100. Solo se puede dormir entre las 20:00 y las 07:00, o con menos de 30 de energía.
   - En Ajustes, "Sincronizar con la hora real" pone el desfase a 0.
 - **Horarios de apertura:**
 
 | Lugar | Horario |
 |---|---|
 | Super Fénix | 07:00–23:00 |
-| Centro Fénix | 08:00–20:00 |
+| Centro Fénix (edificio) | 07:00–22:00 (oficina: turnos de 08:00 a 20:00) |
 | Café Ascua | 07:00–22:00 |
 | La Llama | 12:00–01:00 |
 
@@ -62,8 +62,8 @@ Te mudas a **Barrio Fénix**, un barrio pequeño con cerezos, farolillos y vecin
 ## 6. Atributos, energía y consumibles
 - **Atributos** (de 1 a 10, suben con la experiencia):
   - **Carisma** (conversación): suma +1 de afinidad por conversación por cada 3 puntos.
-  - **Destreza** (minijuegos de limpieza y de calle): da +5% de tiempo por punto.
-  - **Concentración** (trabajo): da +4% de puntuación por punto.
+  - **Destreza** (minijuegos de limpieza, calle y ritmo): +5% de tiempo y pincel más grande en cristales y fregar, cesta más ancha en la calle y ventana de acierto más amplia en el ritmo.
+  - **Concentración** (oficina): da +4% de puntuación por punto en documentos.
   - **Cocina** (cocinar): amplía la ventana de acierto en los minijuegos de cocina.
 - **Energía:** de 0 a 100. Un minijuego cuesta entre 8 y 12 y un turno 25. Con 0 de energía no puedes hacer actividades y el juego te avisa de que comas o descanses.
 - **Consumibles:**
@@ -157,7 +157,7 @@ Te mudas a **Barrio Fénix**, un barrio pequeño con cerezos, farolillos y vecin
 **Mejoras compradas con Deuros:**
 - Casa (cada una suma +15 al Índice de hogar): Sofá nuevo (120 D), Plantas (60 D), Lámpara cálida (80 D).
 - Supermercado: Tarjeta cliente (150 D, −10% en compras).
-- Trabajo: Silla ergonómica (200 D, los turnos cuestan 18 de energía en vez de 25).
+- Trabajo: Silla ergonómica (200 D, los turnos en Centro Fénix cuestan 18 de energía en vez de 25).
 - Restaurante: Mesa reservada (180 D, las citas en La Llama dan +4 de afinidad).
 
 **Índice de hogar** (de 0 a 100): cristales limpios (+20) + suelo limpio (+20) + mejoras.
@@ -175,20 +175,20 @@ Te mudas a **Barrio Fénix**, un barrio pequeño con cerezos, farolillos y vecin
 | ID | Título | Quién la da | Bioma | Pasos | Recompensa |
 |---|---|---|---|---|---|
 | C1 | Bienvenido a Barrio Fénix | Neko-san | Casa | Hablar con Neko-san → entrar en casa → abrir la nevera | 50 D, 1 F |
-| C2 | Cristal de luna | Neko-san | Casa | Limpiar los cristales de casa | 30 D, 1 F |
+| C2 | Cristal de luna | Neko-san | Casa | Limpiar los cristales de casa | 30 D, 1 F, +1 de Destreza |
 | C3 | Huellas en el parqué | Neko-san | Casa | Fregar el suelo de casa | 30 D, 1 F |
 | C4 | La vecina de al lado | Lucía | Casa | Hablar con Lucía → ayudarla con las bolsas (minijuego de la calle) | 40 D, 1 F, +10 Lucía |
 | C5 | El camino de la escoba | Goro | Casa | Sacar nota A o S en cristales o suelo (requiere C2 y C3) | 2 F, +1 de Destreza |
 | C6 | Bajo las farolas | Nora | Casa (noche) | Escuchar el concierto de Nora con nota C o mejor | 1 F, +10 Nora |
 | S1 | Despensa vacía | Neko-san | Supermercado | Hacer la compra con la lista (minijuego) | 40 D, 1 F |
 | S2 | Caja 3, sin descanso | Aiko | Supermercado | Hablar con Aiko → reponer una estantería | 40 D, 1 F, +10 Aiko |
-| S3 | De incógnito | Kaito | Supermercado | Hablar con Kaito → comprar una gorra y unas gafas de sol → entregárselas | 2 F, +15 Kaito |
+| S3 | De incógnito | Kaito | Supermercado | Hablar con Kaito → comprar una gorra y unas gafas de sol → entregárselas | 40 D (te devuelve lo gastado), 2 F, +15 Kaito |
 | S4 | Primer sueldo | Neko-san | Supermercado | Conseguir cualquier trabajo y completar un turno | 1 F |
 | T1 | Entrevista en Centro Fénix | Valeria | Trabajo | Entrevista con 3 preguntas; cualquier combinación de respuestas aprueba. Puedes aceptar el puesto de Administrativo o no | 1 F, +5 Valeria |
 | T2 | Rival a la vista | Ren | Trabajo | Superar los 1200 puntos de Ren en el minijuego de documentos; se puede intentar las veces que haga falta, sin necesidad de tener el empleo | 2 F, +6 Ren |
 | T3 | Café para la jefa | Valeria | Trabajo | Preparar el café exacto de Valeria en Café Ascua (minijuego barista) | 1 F, +8 Valeria |
 | R1 | Fuego en La Llama | Marina | Restaurante | Hablar con Marina → cocinar cualquier plato en La Llama | 2 F, +10 Marina |
-| R2 | La prueba del fuego | Marina | Restaurante | Cocinar 3 platos con nota B o mejor | 3 F, 150 D |
+| R2 | La prueba del fuego | Marina | Restaurante | Cocinar 3 platos con nota B o mejor | 3 F, 150 D, +10 Marina |
 | X1 | El origen del Fénix (secreta) | Neko-san | Todos | Se desbloquea por 5 F tras C1. Hay que encontrar 5 plumas de fénix repartidas por el mapa, que brillan de noche | 300 D, título "Hijo/Hija del Fénix" |
 
 - **Disponibilidad:** las misiones de un bioma aparecen al desbloquearlo. C6 solo puede empezar de noche, pero se ofrece la siesta para que pase el tiempo.
@@ -197,7 +197,10 @@ Te mudas a **Barrio Fénix**, un barrio pequeño con cerezos, farolillos y vecin
   - ayudar a una vecina con la compra;
   - fregar la entrada del Centro Fénix;
   - recoger pétalos;
-  - escuchar a Nora.
+  - escuchar a Nora (solo de noche);
+  - limpiar las ventanas de Lucía;
+  - fregar la terraza de La Llama.
+- Las tareas solo salen de biomas desbloqueados.
 
 ## 13. Minijuegos (táctiles, de 20 a 60 s, con nota S, A, B, C o D)
 1. **Cristales:** deslizar el dedo para limpiar manchas de una ventana, con contrarreloj.

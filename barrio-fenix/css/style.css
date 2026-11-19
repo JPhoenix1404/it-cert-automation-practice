@@ -127,7 +127,7 @@ input { font-family: inherit; }
 .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 14px; }
 .stat { background: #fff; border-radius: 14px; padding: 10px; border: 2px solid var(--line); display: flex; flex-direction: column; }
 .stat span { font-size: 12px; color: var(--ink2); } .stat b { font-size: 22px; } .stat i { font-size: 12px; color: var(--good); }
-.relgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.relgrid { align-items: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
 .card.rel { display: flex; gap: 12px; }
 .card.rel .pt { width: 86px; height: 86px; border-radius: 50%; background-size: cover; background-color: #ffe8ee; flex: none; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--line); }
 .card.rel .pt.q { display: grid; place-items: center; font-size: 40px; color: #c8b8c8; }

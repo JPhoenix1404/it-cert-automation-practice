@@ -39,6 +39,7 @@ function hoursText(h) { return `${String(h[0]).padStart(2, '0')}:00–${String(h
 export function scheduleText(id) {
   const c = CHARACTERS[id];
   const names = { lucia_garden: 'su jardín', lucia_porch: 'su porche', plaza_bench: 'la plaza', plaza_bench2: 'la plaza', plaza_fountain: 'la fuente', plaza_fountain2: 'la fuente', plaza_stage: 'la plaza', goro_garden: 'el jardín zen', neko_spot: 'tu puerta', super_checkout: 'la caja del Super', super_aisle: 'el Super', office_valeria: 'la oficina', office_ren: 'la oficina', llama_kitchen: 'la cocina de La Llama', llama_table: 'La Llama', home_in: 'tu casa' };
+  if (c.schedule.length === 1 && c.schedule[0][0] === 0 && c.schedule[0][1] === 24) return `Todo el día: ${names[c.schedule[0][2]] || ''}`;
   return c.schedule.filter((s) => s[2]).map(([a, b, s]) => `${String(a).padStart(2, '0')}–${String(b % 24).padStart(2, '0')} h: ${names[s] || s}`).join(' · ');
 }
 
@@ -63,12 +64,23 @@ export function buildInteractables() {
     { id: 'super_shop', label: () => 'Comprar en Super Fénix', icon: '🛍️', enabled: () => inZoneUnlocked('super'), run: () => openShop('super') },
     { id: 'moda', label: () => 'Rincón Moda', icon: '👠', enabled: () => inZoneUnlocked('super'), run: openModa },
     { id: 'super_cart', label: () => 'Coger un carro', icon: '🛒', enabled: () => G.quests.step('S1') != null, run: () => playMG('shopping', { context: 'S1' }) },
-    { id: 'super_shelf', label: () => (jobHere('reponedor') ? 'Turno de trabajo: reponer' : 'Reponer la estantería'), icon: '📦', enabled: () => inZoneUnlocked('super') && (jobHere('reponedor') || G.quests.step('S2') != null), run: () => (jobHere('reponedor') ? shiftFlow() : playMG('restock', { context: 'S2' })) },
+    { id: 'super_shelf', label: () => (jobHere('reponedor') ? 'Estantería (turno)' : 'Reponer la estantería'), icon: '📦', enabled: () => inZoneUnlocked('super') && (jobHere('reponedor') || G.quests.step('S2') != null), run: async () => {
+      if (jobHere('reponedor') && G.quests.step('S2')) { const i = await ui().choose('narr', '¿Qué quieres hacer?', [{ label: '📦 Ayudar a Aiko (misión)' }, { label: '💼 Hacer mi turno' }], { cancel: 'Nada' }); if (i === 0) return playMG('restock', { context: 'S2' }); if (i === 1) return shiftFlow(); return; }
+      return jobHere('reponedor') ? shiftFlow() : playMG('restock', { context: 'S2' });
+    } },
     { id: 'cafe_counter', label: () => (G.quests.step('T3') ? 'Preparar el café de Valeria' : jobHere('barista') ? 'Turno de trabajo: barista' : 'Café Ascua'), icon: '☕', enabled: () => inZoneUnlocked('trabajo'), run: cafeFlow },
     { id: 'work_desk', label: () => 'Turno de oficina', icon: '📂', enabled: () => jobHere('administrativo'), run: shiftFlow },
     { id: 'llama_stove', label: () => (jobHere('cocina') ? 'Fogón (turno o cocinar)' : 'Fogón de La Llama'), icon: '🔥', enabled: () => inZoneUnlocked('restaurante'), run: llamaStoveFlow },
   ];
-  for (const it of list) { it.pos = OBJ[it.id]; it.r = it.id.startsWith('gate_') ? 2.6 : 1.7; }
+  // puertas cerradas: horario + siesta
+  for (const bid of ['super', 'centro', 'llama']) {
+    const b = BUILDINGS[bid];
+    list.push({ id: 'door_' + bid, pos: { x: b.doorX, z: b.rect[3] + 1.0 }, r: 1.8, icon: '🔒', label: () => `${b.name}: cerrado (abre a las ${String(b.hours[0]).padStart(2, '0')}:00)`, enabled: () => G.state.unlocked[b.zone] && !buildingOpen(bid), run: async () => {
+      const ok = await ui().confirm(`${b.name} está cerrado. Abre a las ${String(b.hours[0]).padStart(2, '0')}:00. ¿Echar una siesta de 2 horas para que pase el tiempo?`, 'Siesta (+2 h)', 'Ahora no');
+      if (ok) await napFlow();
+    } });
+  }
+  for (const it of list) { if (!it.pos) it.pos = OBJ[it.id]; if (!it.r) it.r = it.id.startsWith('gate_') ? 2.6 : 1.7; }
   return list;
 }
 
@@ -276,14 +288,15 @@ async function llamaStoveFlow() {
 }
 async function cafeFlow() {
   if (!buildingOpen('centro')) { ui().toast('Café Ascua está cerrado.', '🔒'); return; }
-  if (G.quests.step('T3')) { await playMG('barista', { context: 'valeria' }); return; }
   const opts = [];
+  if (G.quests.step('T3')) opts.push({ label: '☕ Preparar el café de Valeria (misión)', k: 'valeria' });
   if (jobHere('barista')) opts.push({ label: '☕ Hacer mi turno de barista', k: 'shift' });
   else opts.push({ label: '📝 Pedir trabajo de barista', k: 'job' });
   opts.push({ label: `🥤 Tomar un café (${price('cafe')} D)`, k: 'buy' });
   const i = await ui().choose('narr', 'Café Ascua huele a tostado y a canela.', opts, { cancel: 'Salir' });
   if (i < 0) return;
   const k = opts[i].k;
+  if (k === 'valeria') return playMG('barista', { context: 'valeria' });
   if (k === 'shift') return shiftFlow();
   if (k === 'job') return applyJob('barista');
   if (k === 'buy') { if (G.state.deuros < price('cafe')) { ui().toast('No te llega.', '💸', 'bad'); return; } addDeuros(-price('cafe')); addItem('cafe'); eat('cafe'); }
@@ -437,7 +450,6 @@ async function talkMenu(npc) {
     // trabajo
     if (id === 'aiko' && G.state.unlocked.super && !(G.state.job?.id === 'reponedor')) opts.push({ label: '📦 Pedir trabajo de reponedor', k: 'job', job: 'reponedor' });
     if (id === 'valeria' && G.state.interviewDone && !(G.state.job?.id === 'administrativo')) opts.push({ label: '💼 Pedir el puesto de administrativo', k: 'job', job: 'administrativo' });
-    if (id === 'valeria' && !G.state.interviewDone && G.quests.status('T1') === 'done') opts.push({ label: '💼 Repetir la entrevista', k: 'interview' });
     if (id === 'marina' && G.state.unlocked.restaurante && !(G.state.job?.id === 'cocina')) opts.push({ label: '🔪 Pedir trabajo en la cocina', k: 'job', job: 'cocina' });
     // romance
     if (c.romance) {
@@ -683,7 +695,7 @@ export function openMenu(tab = 'misiones') {
   }, { wide: true });
 }
 function tabQuests(box) {
-  const act = G.quests.active(), av = QUEST_ORDER.filter((id) => G.quests.status(id) === 'available'), done = QUEST_ORDER.filter((id) => G.quests.status(id) === 'done');
+  const act = G.quests.active(), av = QUEST_ORDER.filter((id) => G.quests.status(id) === 'available' && !QUESTS[id].secret), done = QUEST_ORDER.filter((id) => G.quests.status(id) === 'done');
   box.appendChild(el('h3', '', 'En curso'));
   if (!act.length) box.appendChild(el('div', 'empty', 'Ninguna. Busca a los vecinos con un ❗ sobre la cabeza.'));
   for (const id of act) { const q = QUESTS[id], st = G.state.quests[id], step = q.steps[st.step]; box.appendChild(el('div', 'card row', `<div class="ic">${q.star ? '⭐' : '📜'}</div><div class="grow"><div class="nm">${q.title}</div><div class="ds">➡️ ${esc(step.desc)}${step.count ? ` (${st.count}/${step.count})` : ''}</div><div class="ds dim">De: ${CHARACTERS[q.giver].short} · Paso ${st.step + 1}/${q.steps.length}</div></div><div class="rw">${q.reward.d ? q.reward.d + ' D ' : ''}${q.reward.f ? q.reward.f + ' 🔥' : ''}</div>`)); }
