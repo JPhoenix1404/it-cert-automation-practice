@@ -68,7 +68,7 @@ export class Quests {
       if (r.title) G.state.player.title = G.state.player.gender === 'f' ? 'Hija del Fénix' : 'Hijo del Fénix';
       const parts = [r.d ? `+${r.d} Deuros` : '', r.f ? `+${r.f} Fenixio${r.f > 1 ? 's' : ''}` : ''].filter(Boolean).join(' · ');
       await G.ui.banner('¡Misión completada!', `${d.title}${parts ? ' — ' + parts : ''}`, '🏆');
-      if (id === 'S3') G.npcs.get('kaito').build();
+      if (id === 'S3') { G.npcs.get('kaito').build(); G.ui.portraits.kaito = G.portrait('kaito'); }
       bus.emit('quests', {}); bus.emit('save');
     });
   }

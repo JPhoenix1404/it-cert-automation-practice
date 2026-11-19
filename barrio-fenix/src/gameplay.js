@@ -100,7 +100,7 @@ async function sleepFlow() {
   G.state.energy = 100; bus.emit('energy', {});
   if (spouse) {
     const c = CHARACTERS[spouse];
-    await ui().say([[spouse, c.morning || 'Buenos días.', 'happy']]);
+    await ui().say([[spouse, morningLine(spouse), 'happy']]);
     addAff(spouse, 3); addBuff('carisma', 1, 4);
   }
   ui().toast('¡Buenos días! Energía al máximo.', '☀️', 'good');
@@ -112,6 +112,13 @@ async function napFlow() {
   addEnergy(G.state.upgrades.sofa ? 40 : 30);
   ui().toast(`Son las ${clockText()}. Energía recuperada.`, '😌', 'good');
   bus.emit('save');
+}
+
+function morningLine(id) {
+  const c = CHARACTERS[id], r = rel(id);
+  const list = Array.isArray(c.morning) ? c.morning : [c.morning || 'Buenos días.'];
+  const fresh = list.filter((l) => l !== r.lastMorning);
+  const l = pick(fresh.length ? fresh : list); r.lastMorning = l; return l;
 }
 
 // ---------------- Desbloqueo de biomas ----------------
@@ -411,12 +418,19 @@ async function secretQuest(id, qid) {
 
 async function talkMenu(npc) {
   const id = npc.id, c = CHARACTERS[id], r = rel(id), d = dayIndex();
-  const greet = pick(G.state.player.gender === 'f' && c.greetF ? c.greetF.concat(c.greet) : c.greet);
+  const romantic = ['pareja', 'prometidos', 'casados'].includes(r.state);
+  let pool = romantic && c.greetLove ? c.greetLove : hearts(id) >= 3 && c.greetFriend ? c.greetFriend : c.greet;
+  if (isNight() && c.greetNight && Math.random() < 0.5) pool = c.greetNight;
+  if (isNight()) pool = pool.filter((l) => !/Buenos días/.test(l)).length ? pool.filter((l) => !/Buenos días/.test(l)) : c.greetNight || pool;
+  const fresh = pool.filter((l) => l !== r.lastGreet);
+  const greet = pick(fresh.length ? fresh : pool);
+  r.lastGreet = greet;
   let first = true;
   while (true) {
     const opts = [];
     for (const a of G.quests.talkActions(id)) opts.push({ label: a.label, k: 'qa', a });
     for (const qid of G.quests.availableFrom(id).filter((q) => QUESTS[q].costF)) opts.push({ label: `🔥 ${QUESTS[qid].title} (${QUESTS[qid].costF} Fenixios)`, k: 'secret', qid });
+    if (id === 'nora' && G.quests.status('C6') === 'done') opts.push({ label: r.lastConcertDay === d ? '🎸 Escuchar el concierto (ya hoy)' : '🎸 Escuchar el concierto', k: 'concert', disabled: r.lastConcertDay === d, why: 'Nora solo da un concierto por noche.' });
     opts.push({ label: r.lastTalkDay === d ? '💬 Charlar (ya habéis hablado hoy)' : '💬 Charlar', k: 'chat', disabled: r.lastTalkDay === d, why: 'Ya habéis charlado hoy. Vuelve mañana.' });
     const gifts = Object.keys(G.state.inventory).filter((k) => G.state.inventory[k] > 0 && itemInfo(k).kind !== 'key');
     opts.push({ label: r.lastGiftDay === d ? '🎁 Regalar (ya le has regalado hoy)' : '🎁 Regalar algo', k: 'gift', disabled: r.lastGiftDay === d || !gifts.length, why: r.lastGiftDay === d ? 'Un regalo al día es suficiente.' : 'No llevas nada para regalar.' });
@@ -437,9 +451,13 @@ async function talkMenu(npc) {
     }
     const i = await ui().choose(id, first ? greet : '¿Algo más?', opts, { cancel: 'Adiós' });
     first = false;
-    if (i < 0) { await ui().say([[id, pick(['Hasta luego.', 'Nos vemos.', '¡Adiós!'])]]); return; }
+    if (i < 0) { await ui().say([[id, pick(c.bye || ['Hasta luego.', 'Nos vemos.', '¡Adiós!'])]]); return; }
     const o = opts[i];
     if (o.k === 'qa') await runTalkAction(id, o.a);
+    else if (o.k === 'concert') {
+      const res = await playMG('rhythm', { context: 'nora' });
+      if (res) { r.lastConcertDay = d; const g = { S: 8, A: 6, B: 4, C: 2, D: 0 }[res.grade]; if (g) addAff(id, g); await ui().say([[id, g >= 6 ? 'Has seguido cada nota. Eso no lo hace nadie.' : g >= 2 ? 'Gracias por quedarte. Se nota cuando alguien escucha.' : 'Bueno... al menos has venido.', g >= 6 ? 'happy' : 'neutral']]); }
+    }
     else if (o.k === 'secret') await secretQuest(id, o.qid);
     else if (o.k === 'chat') await chat(id);
     else if (o.k === 'gift') await giftFlow(id);
@@ -491,15 +509,18 @@ async function chat(id) {
     const fact = pick(r.facts);
     const opts = shuffle([fact.a, ...fact.wrong]).map((l) => ({ label: l }));
     const i = await ui().choose(id, fact.q, opts);
-    if (opts[i].label === fact.a) { addAff(id, 12); npc?.ch.setExpression('blush', 3); await ui().say([[id, c.quizRight, 'blush']]); }
+    if (opts[i].label === fact.a) { r.facts.splice(r.facts.indexOf(fact), 1); addAff(id, 12); npc?.ch.setExpression('blush', 3); await ui().say([[id, c.quizRight, 'blush']]); }
     else { addAff(id, -2); npc?.ch.setExpression('sad', 3); await ui().say([[id, c.quizWrong, 'sad']]); }
     addAttrXp('carisma', 4);
     return;
   }
-  const pool = c.topics.map((t, i) => i).filter((i) => !r.usedTopics.includes(i));
-  const ti = pool.length ? pick(pool) : pick(c.topics.map((t, i) => i));
-  r.usedTopics.push(ti); if (r.usedTopics.length > Math.max(1, c.topics.length - 2)) r.usedTopics.shift();
-  const topic = c.topics[ti];
+  const all = c.topics.concat(hearts(id) >= 5 && c.topicsClose ? c.topicsClose : []);
+  const pool = all.map((t, i) => i).filter((i) => !r.usedTopics.includes(i));
+  // al llegar a 5♥ se priorizan los temas íntimos aún no vistos
+  const closePool = pool.filter((i) => i >= c.topics.length);
+  const ti = closePool.length && Math.random() < 0.6 ? pick(closePool) : pool.length ? pick(pool) : pick(all.map((t, i) => i));
+  r.usedTopics.push(ti); if (r.usedTopics.length > Math.max(1, all.length - 2)) r.usedTopics.shift();
+  const topic = all[ti];
   let opts = topic.opts.map(([tone, label]) => ({ tone, label }));
   if (topic.fact && !r.facts.find((f) => f.q === topic.fact.q)) r.facts.push(topic.fact);
   const i = await ui().choose(id, topic.line, opts);
@@ -546,10 +567,8 @@ async function giftFlow(id) {
   const g = giftDelta(id, itemId);
   addAff(id, g.d);
   const npc = G.npcs.get(id);
-  let line = { love: '¡¿Para mí?! ¡Me encanta! ¿Cómo lo sabías?', like: '¡Qué detalle! Muchas gracias.', neutral: 'Ah... gracias. Muy amable.', hate: 'Eh... gracias, supongo. No es muy lo mío.' }[g.kind];
+  let line = (c.gift && c.gift[g.kind]) || { love: '¡¿Para mí?! ¡Me encanta!', like: '¡Qué detalle! Muchas gracias.', neutral: 'Ah... gracias.', hate: 'Eh... gracias, supongo.' }[g.kind];
   if (id === 'marina' && itemInfo(itemId).kind === 'dish') line = g.kind === 'love' ? c.dishLove : g.kind === 'hate' ? c.dishHate : 'Comible. Tiene margen de mejora.';
-  if (id === 'neko') line = { love: '¡PESCADO! Eres mi humano favorito. No se lo digas a Lucía.', like: 'Acepto tu ofrenda, humano.', neutral: '*Lo huele y se va.*', hate: '*Te mira con desprecio absoluto.*' }[g.kind];
-  if (id === 'goro') line = { love: 'Ho, ho. Un té digno de un maestro. Gracias, aprendiz.', like: 'Un buen gesto. El jardín te lo agradece.', neutral: 'Hm. Gracias.', hate: '¿Esto? Esto es veneno con burbujas.' }[g.kind];
   npc?.ch.setExpression(g.kind === 'love' ? 'happy' : g.kind === 'hate' ? 'sad' : 'neutral', 3);
   await ui().say([[id, line, g.kind === 'love' ? 'happy' : 'neutral']]);
   if (g.kind === 'love') sfx('heart');
@@ -591,7 +610,7 @@ async function dateFlow(id, skipCheck = false) {
     await ui().say([[id, pick(c.react[res.kind]), res.kind === 'love' ? 'blush' : 'neutral']]);
   }
   if (place === 'llama' && G.state.upgrades.mesa) gain += 4;
-  gain = Math.max(1, Math.min(18, gain));
+  gain = Math.max(6, Math.min(18, gain));
   r.dates++; r.lastDateDay = d;
   addAff(id, gain);
   addAttrXp('carisma', 8);
@@ -604,10 +623,10 @@ async function dateFlow(id, skipCheck = false) {
       skipUntil(8);
       G.state.energy = 100; bus.emit('energy', {});
       G.player.teleport(SPOTS.home_in);
-      await ui().say([[id, c.morning, 'happy']]);
+      await ui().say([[id, morningLine(id), 'happy']]);
       addAff(id, 5);
     }
-  } else await ui().say([[id, pick(['Me lo he pasado muy bien.', 'Hay que repetir.', 'Gracias por esta noche.']), 'happy']]);
+  } else await ui().say([[id, pick(c.afterDate || ['Me lo he pasado muy bien.']), 'happy']]);
   bus.emit('save');
 }
 async function confessFlow(id) {
@@ -633,7 +652,7 @@ async function weddingFlow(id) {
   await ui().say([
     ['goro', 'Me han pedido que oficie esto. Seré breve: el amor es como el bambú. Se dobla, pero no se rompe.'],
     ['neko', 'Y si se rompe, hay pescado en el banquete. Miau.'],
-    [id, `{name}... Sí, quiero.`, 'blush'],
+    [id, c.vows || '{name}... Sí, quiero.', 'blush'],
     ['you', 'Sí, quiero.'],
   ]);
   r.state = 'casados'; G.state.spouse = id; G.state.engaged = null; r.weddingDay = null;

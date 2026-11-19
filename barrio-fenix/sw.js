@@ -1,6 +1,6 @@
 // Generado por tools/build-sw.mjs — no editar a mano.
-const VERSION = 'bf-f644062be8';
-const FILES = ["./","assets/icons/icon-180.png","assets/icons/icon-192.png","assets/icons/icon-512.png","css/style.css","index.html","manifest.webmanifest","src/audio.js","src/character.js","src/data/characters.js","src/data/items.js","src/data/quests.js","src/game.js","src/gameplay.js","src/input.js","src/main.js","src/minigames/base.js","src/minigames/games.js","src/npc.js","src/player.js","src/quests.js","src/relations.js","src/state.js","src/time.js","src/toon.js","src/ui.js","src/world.js","vendor/BufferGeometryUtils.js","vendor/three.module.min.js"];
+const VERSION = 'bf-df1ce27df4';
+const FILES = ["./","assets/icons/icon-180.png","assets/icons/icon-192.png","assets/icons/icon-512.png","css/style.css","index.html","manifest.webmanifest","src/audio.js","src/character.js","src/data/characters.js","src/data/characters_extra.js","src/data/items.js","src/data/quests.js","src/game.js","src/gameplay.js","src/input.js","src/main.js","src/minigames/base.js","src/minigames/games.js","src/npc.js","src/player.js","src/quests.js","src/relations.js","src/state.js","src/time.js","src/toon.js","src/ui.js","src/world.js","vendor/BufferGeometryUtils.js","vendor/three.module.min.js"];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {

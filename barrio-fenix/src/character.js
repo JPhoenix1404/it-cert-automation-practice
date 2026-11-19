@@ -159,7 +159,7 @@ function addHair(B, style, color, headY, R) {
   const bang = (x, y, z, rx, rz, sx = 0.13, sy = 0.2, sz = 0.07) => B.geo(SPH_LO, hc, x, y, z, { rx, rz, sx, sy, sz });
   if (style === 'bald') {
     // corona lateral de pelo blanco
-    B.geo(new THREE.TorusGeometry(R * 0.92, 0.07, 6, 18, PI * 1.3), hc, 0, headY - 0.02, -0.02, { rx: PI / 2, rz: -PI * 0.15 - PI * 0.5 });
+    B.geo(new THREE.TorusGeometry(R * 0.93, 0.07, 6, 18, PI * 1.2), hc, 0, headY - 0.06, -0.02, { rx: PI / 2, rz: -PI * 1.1 });
     return;
   }
   B.geo(segCap, hc, 0, headY + 0.01, -0.01);
@@ -250,7 +250,7 @@ export function buildCharacter(look, { faceSize = 256 } = {}) {
   B.geo(SPH, c.chest, 0, chestY, 0, { sx: shoulderW, sy: 0.24, sz: fem ? 0.19 : 0.18, ...o });
   if (fem && c.chest !== look.skin) for (const sd of [-1, 1]) B.geo(SPH_LO, c.chest, sd * 0.09, chestY - 0.04, 0.12, { sx: 0.1, sy: 0.09, sz: 0.08, outline: false });
   if (look.top === 'open_shirt') B.box(0.12, 0.32, 0.02, look.skin, 0, chestY - 0.02, 0.18, 0, { outline: false });
-  if (look.top === 'suit') { B.box(0.1, 0.3, 0.02, '#f2f2f2', 0, chestY - 0.02, 0.178, 0, { outline: false }); B.box(0.035, 0.26, 0.02, '#a8283a', 0, chestY - 0.05, 0.19, 0, { outline: false }); }
+  if (look.top === 'suit') { B.box(0.1, 0.3, 0.02, '#f2f2f2', 0, chestY - 0.02, 0.178, 0, { outline: false }); B.box(0.035, 0.26, 0.02, look.tie || '#a8283a', 0, chestY - 0.05, 0.19, 0, { outline: false }); }
   if (look.top === 'gi') B.box(0.42, 0.06, 0.38, '#1e1e24', 0, 1.0, 0, 0, { outline: false });
   if (look.top === 'apron') B.box(0.36, 0.5, 0.03, '#2a2a30', 0, 1.0, 0.2, 0, { outline: false });
   if (look.top === 'hoodie') B.geo(new THREE.TorusGeometry(0.15, 0.05, 6, 14), look.topColor, 0, chestY + 0.2, -0.06, { rx: PI / 2 + 0.4 });

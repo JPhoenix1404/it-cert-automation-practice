@@ -14,7 +14,7 @@ export const QUESTS = {
       { desc: 'Abre la nevera', marker: 'obj:fridge', ev: 'interact', match: (e) => e.id === 'fridge' },
     ],
     outro: [
-      ['neko', 'Dos onigiris y un café. Ni un triste pescado. Vas a tener que trabajar, humano.'],
+      ['neko', 'Dos onigiris y un café. Ni un triste pescado. Vas a tener que trabajar, human{o}.'],
       ['neko', 'Te doy una pista: en este barrio cada favor que haces brilla. Esas chispas se llaman Fenixios. Con ellos se abren las puertas del barrio.'],
       ['narr', 'El Supermercado se desbloquea con 3 Fenixios. Mira la barrera del norte de la plaza.'],
     ],
@@ -38,7 +38,7 @@ export const QUESTS = {
       ['neko', 'Coge la fregona. Haz círculos. Con amor.'],
     ],
     steps: [{ desc: 'Friega el suelo de casa', marker: 'obj:mop', ev: 'minigame', match: (e) => e.type === 'floor' }],
-    outro: [['neko', 'Impecable. Ahora puedo tumbarme en él sin miedo. Gracias, humano.']],
+    outro: [['neko', 'Impecable. Ahora puedo tumbarme en él sin miedo. Gracias, human{o}.']],
     reward: { d: 30, f: 1 },
   },
   C4: {
@@ -200,14 +200,14 @@ export const QUESTS = {
   X1: {
     title: 'El origen del Fénix', giver: 'neko', biome: 'casa', order: 16, req: ['C1'], secret: true, costF: 5,
     intro: [
-      ['neko', 'Te voy a contar un secreto, humano. Pero los secretos cuestan. Cinco Fenixios.'],
+      ['neko', 'Te voy a contar un secreto, human{o}. Pero los secretos cuestan. Cinco Fenixios.'],
       ['neko', 'Hace mucho, un fénix se posó en esta plaza. Al renacer, dejó caer cinco plumas por el barrio. Quien las reúna, descubrirá por qué este sitio te ha elegido.'],
       ['neko', 'Brillan más de noche. Búscalas en cada rincón: la casa, el super, el trabajo y el restaurante.'],
     ],
     steps: [{ desc: 'Encuentra las 5 plumas de fénix', marker: 'feather', ev: 'feather', count: 5, match: () => true }],
     outro: [
       ['neko', 'Cinco plumas. Están calientes, ¿verdad? Como una chimenea. Como un hogar.'],
-      ['neko', 'El fénix no elige a los fuertes, humano. Elige a quien se atreve a empezar de cero. Bienvenid{o} a casa. De verdad.'],
+      ['neko', 'El fénix no elige a los fuertes, human{o}. Elige a quien se atreve a empezar de cero. Bienvenid{o} a casa. De verdad.'],
       ['narr', 'Has obtenido el título «Hij{o} del Fénix».'],
     ],
     reward: { d: 300, title: true },

@@ -24,8 +24,8 @@ export function romanceable(id) { return prefMatches(id); }
 export function romanceBlock(id) {
   if (!romanceable(id)) return 'No encaja con tu preferencia romántica.';
   const r = rel(id);
-  if (r.state === 'ex' && dayIndex() < r.exUntil) return 'Aún está dolido. Dale unos días.';
-  if (id === 'valeria' && isSubordinateOfValeria()) return CHARACTERS.valeria.lockedRomance;
+  if (r.state === 'ex' && dayIndex() < r.exUntil) return `Aún está dolid${CHARACTERS[id].gender === 'f' ? 'a' : 'o'}. Dale unos días.`;
+  if (id === 'valeria' && isSubordinateOfValeria() && ['conocido', 'amistad', 'ex'].includes(r.state)) return CHARACTERS.valeria.lockedRomance;
   return null;
 }
 export function isSubordinateOfValeria() { const j = G.state.job; return !!(j && j.id === 'administrativo' && j.rank < 2); }
@@ -33,7 +33,7 @@ export function isSubordinateOfValeria() { const j = G.state.job; return !!(j &&
 export function affCap(id) {
   const r = rel(id);
   if (r.state === 'ex' && dayIndex() < r.exUntil) return 40;
-  if (id === 'valeria' && isSubordinateOfValeria()) return 50;
+  if (id === 'valeria' && isSubordinateOfValeria() && ['desconocido', 'conocido', 'amistad', 'ex'].includes(r.state)) return 50;
   if (!romanceable(id)) return 100; // amistad completa
   if (['desconocido', 'conocido', 'amistad'].includes(r.state)) return 69; // sin pareja no se pasa de 6,9♥
   if (r.state === 'citas') return 89;
@@ -52,7 +52,7 @@ export function addAff(id, n, { silent = false } = {}) {
   if (!r.friendMilestone && r.aff >= 30) {
     r.friendMilestone = true;
     addFenixios(1, 'amistad');
-    if (!silent) G.ui?.toast(`¡Ahora sois amigos con ${CHARACTERS[id].short}! +1 Fenixio`, '🤝', 'good');
+    if (!silent) { const both = G.state.player.gender === 'f' && CHARACTERS[id].gender === 'f'; G.ui?.toast(`¡${CHARACTERS[id].short} y tú ya sois amig${both ? 'as' : 'os'}! +1 Fenixio`, '🤝', 'good'); }
   }
   const after = hearts(id);
   if (!silent && n !== 0) {
@@ -68,6 +68,7 @@ export function toneDelta(id, tone) {
   const t = c.tones;
   let kind = 'neutral', d = 2;
   if (tone === 'incognito') { kind = 'hate'; d = -8; }
+  else if (tone === 'atrevido' && t.publicShy && G.npcs && G.npcs.list.some((n) => n.id !== id && n.visible && G.npcs.get(id) && n.pos.distanceTo(G.npcs.get(id).pos) < 8)) { kind = 'hate'; d = -3; }
   else if (t.fav.includes(tone)) { kind = 'love'; d = 5; }
   else if (t.hate.includes(tone)) { kind = 'hate'; d = -3; }
   else if (tone === 'atrevido' && h < 5 && !['marina', 'nora'].includes(id)) { kind = 'hate'; d = -3; }
@@ -95,6 +96,7 @@ function matchGift(list, itemId) {
 }
 export function giftDelta(id, itemId) {
   const g = CHARACTERS[id].gifts;
+  if (id === 'kaito' && itemId === 'gafas' && G.state.quests.S3?.status === 'done') return { kind: 'hate', d: -6 };
   if (matchGift(g.love, itemId)) return { kind: 'love', d: 15 };
   if (matchGift(g.hate, itemId)) return { kind: 'hate', d: -6 };
   if (matchGift(g.like, itemId)) return { kind: 'like', d: 8 };
@@ -125,7 +127,7 @@ export function applyCaught(partner) {
   const wasMarried = r.state === 'casados';
   addAff(partner, -40, { silent: true });
   breakUp(partner, { divorce: wasMarried });
-  for (const id of CHAR_ORDER) if (id !== partner) addAff(id, -3, { silent: true });
+  for (const id of CHAR_ORDER) if (id !== partner && rel(id).state !== 'desconocido') addAff(id, -3, { silent: true });
   return wasMarried;
 }
 export function breakUp(id, { divorce = false } = {}) {

@@ -43,7 +43,7 @@ function makePortrait(look, isCat = false) {
   const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(1, 2, 3); scene.add(dl);
   const ch = buildCharacter(look);
   scene.add(ch.root);
-  ch.setExpression('happy');
+  ch.setExpression('neutral');
   const h = isCat ? 0.78 : 1.86 * (look.height || 1);
   const cam = new THREE.OrthographicCamera(-0.62, 0.62, 0.62, -0.62, 0.1, 20);
   if (isCat) { cam.left = cam.bottom = -0.55; cam.right = cam.top = 0.55; cam.updateProjectionMatrix(); }
@@ -65,7 +65,7 @@ function makePortrait(look, isCat = false) {
   rt.dispose(); ch.dispose();
   return c.toDataURL('image/png');
 }
-G.portrait = (id) => (id === 'player' ? makePortrait(resolveLook(G.state.player)) : makePortrait({ ...CHARACTERS[id].look, gender: CHARACTERS[id].gender }, !!CHARACTERS[id].isCat));
+G.portrait = (id) => (id === 'player' ? makePortrait(resolveLook(G.state.player)) : makePortrait(G.npcs ? G.npcs.get(id).look() : { ...CHARACTERS[id].look, gender: CHARACTERS[id].gender }, !!CHARACTERS[id].isCat));
 
 // ---------------- Título y creador ----------------
 const SKINS = ['#f6dcc6', '#f1d2b6', '#e2b48e', '#c98f6a', '#9a6a4a', '#6a4430'];

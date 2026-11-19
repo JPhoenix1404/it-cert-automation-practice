@@ -1,3 +1,5 @@
+import { EXTRA } from './characters_extra.js';
+
 // Personajes: apariencia, horario, gustos, mecánicas y diálogos.
 // Plantillas en textos: {name} = nombre del jugador, {o} = "o"/"a" según el género del jugador.
 
@@ -21,7 +23,6 @@ export const CHARACTERS = {
     tones: { fav: ['sincero', 'gracioso'], hate: [], hateEarly: ['atrevido'] },
     gifts: { love: ['suculenta'], like: ['cafe', 'flores', 'plato:*'], hate: ['cerveza'] },
     greet: ['Ah, el nuevo vecino. ¿Ya has descubierto que la persiana del 3 no cierra?', 'Buenos días. O lo que quede de ellos.', '¿Vienes a pedir sal o a quedarte mirando mis hortensias?'],
-    greetF: ['Ah, la nueva vecina. ¿Ya has descubierto que la persiana del 3 no cierra?'],
     topics: [
       { line: 'Estoy rediseñando el jardín. Otra vez. La simetría me persigue.', opts: [['sincero', 'A mí me parece perfecto como está.'], ['gracioso', '¿Has probado a dejar que una planta haga lo que quiera? Por rebeldía.'], ['atrevido', 'Me encantaría que me rediseñaras a mí también.']] },
       { line: 'Mi último cliente quería una casa "minimalista pero con mucha cosa". Sigo sin recuperarme.', opts: [['gracioso', 'Minimalista pero con mucha cosa... como mi nevera: vacía, pero con veinte salsas.'], ['sincero', 'Debe de ser frustrante que no te escuchen.'], ['seguro', 'Tú sabes lo que hace falta. Díselo sin miedo.']] },
@@ -43,9 +44,9 @@ export const CHARACTERS = {
       { line: '¿Sabes qué es lo que más me asusta? Que algo me guste y no saber controlarlo.', opts: [['sincero', 'A mí me pasa contigo.'], ['seguro', 'No hace falta controlarlo todo. Déjate llevar.'], ['dulce', 'Si te caes, yo te sujeto.']] },
     ],
     askDate: { yes: '¿Una cita? ...Vale. Pero si llegas tarde, te cobro la hora.', no: 'Aún no. Te falta... no sé. Te falta.' },
-    confess: { yes: 'Llevo semanas diseñando cómo decírtelo y vas tú y te adelantas. Sí. Claro que sí.', no: 'Me gustas. Pero todavía no confío del todo. Dame tiempo.' },
+    confess: { yes: 'Tenía un plano de cómo decírtelo y vas tú y te adelantas. Sí. Claro que sí.', no: 'Me gustas. Pero todavía no confío del todo. Dame tiempo.' },
     propose: { yes: 'Esto no estaba en ningún plano... Sí. Sí, quiero.', no: 'Es demasiado pronto. No me presiones.' },
-    sleepover: 'Quédate. Pero mañana haces tú el café.',
+    sleepover: 'Puedes quedarte. Pero mañana haces tú el café.',
     morning: 'Buenos días. Has dejado la toalla en el suelo. Te perdono. Esta vez.',
     breakup: 'Vale. Lo entiendo. Solo... no vuelvas a mirarme desde tu ventana.',
     caught: '¿En serio? ¿Delante de mis narices? Hemos terminado.',
@@ -79,11 +80,11 @@ export const CHARACTERS = {
     quizWrong: 'Ah... no pasa nada. Fue hace mucho, supongo.',
     date: [
       { line: 'Nunca había tenido una cita que no fuera en un videojuego. ¿Lo estoy haciendo bien?', opts: [['dulce', 'Lo estás haciendo perfecto. Relájate.'], ['gracioso', 'Vas por el nivel 3. Te queda el jefe final: el postre.'], ['sincero', 'Yo también estoy nervios{o}, si te sirve de consuelo.']] },
-      { line: 'A veces pienso que soy demasiado aburrida para alguien como tú.', opts: [['sincero', 'Eres la persona menos aburrida que conozco.'], ['dulce', 'Contigo hasta reponer yogures me parece divertido.'], ['seguro', 'Deja que eso lo decida yo. Y ya lo he decidido.']] },
+      { line: 'Cuando acabe la carrera quiero hacer un voluntariado fuera. Un año. ¿Me esperarías?', opts: [['sincero', 'Te esperaría. Y te escribiría cada semana.'], ['dulce', 'Te ayudaré a hacer la maleta. Y a volver.'], ['seguro', 'Mejor aún: iría a verte.']] },
       { line: 'Si fuéramos personajes de un juego, ¿cuál sería nuestra misión?', opts: [['gracioso', 'Encontrar los yogures de coco legendarios.'], ['dulce', 'Proteger el barrio. Juntos.'], ['atrevido', 'Desbloquear el final secreto. Ya me entiendes.']] },
     ],
     askDate: { yes: '¿U-una cita? ¿Conmigo? ...¡Sí! Digo, vale. Sí.', no: 'Perdona... todavía me pongo muy nerviosa contigo.' },
-    confess: { yes: 'Llevo días ensayando qué decirte si me lo pedías... y se me ha olvidado todo. ¡Sí!', no: 'Me gustas mucho... pero necesito un poco más de tiempo.' },
+    confess: { yes: 'Tenía un discurso preparado... y se me ha olvidado todo. ¡Sí! ¡Sí!', no: 'Me gustas mucho... pero necesito un poco más de tiempo.' },
     propose: { yes: '¡¿De verdad?! ¡Sí! ¡Mil veces sí! Voy a llorar como con "Lunar Drift".', no: 'Es... es muy pronto. Lo siento.' },
     sleepover: 'Quédate... si quieres. Pixel no te va a dejar sitio en la cama, te aviso.',
     morning: 'Buenos días... Pixel te ha robado la almohada. Te he hecho tostadas.',
@@ -96,7 +97,7 @@ export const CHARACTERS = {
     role: 'Directora de operaciones · Centro Fénix',
     bio: 'Exigente, ambiciosa y directa, con un humor seco que muy pocos llegan a ver. Odia la adulación.',
     mechanic: 'Línea profesional: si eres su subordinado (Administrativo de rango 1 o 2), su afinidad no pasa de 5♥.',
-    look: { skin: '#d9a988', hair: 'long', hairColor: '#17100f', eyes: '#3d2618', top: 'suit', topColor: '#262836', bottom: 'skirt', bottomColor: '#262836', shoesColor: '#141418', acc: ['earrings'], height: 1.04 },
+    look: { skin: '#d9a988', hair: 'long', hairColor: '#17100f', eyes: '#8a5a2a', top: 'shirt', topColor: '#f2ece4', bottom: 'skirt', bottomColor: '#262836', shoesColor: '#141418', acc: ['earrings'], height: 1.04 },
     schedule: [[8, 20, 'office_valeria'], [20, 23, 'llama_table'], [23, 24, null], [0, 8, null]],
     tones: { fav: ['seguro', 'sincero'], hate: ['dulce'] },
     gifts: { love: ['pluma'], like: ['cafe', 'plato:sushi'], hate: ['flores'] },
@@ -107,7 +108,7 @@ export const CHARACTERS = {
       { line: 'Llevo seis años sin vacaciones. No las necesito.', opts: [['sincero', 'Todo el mundo las necesita. Incluso tú.'], ['gracioso', 'Las vacaciones te tienen miedo, por eso no vienen.'], ['atrevido', 'Te llevaría a algún sitio sin wifi. Ni informes.']] },
       { line: 'En mi primer trabajo me dijeron que nunca llegaría a directora. Les mando una postal cada Navidad.', opts: [['gracioso', 'Con tu cargo en negrita, espero.'], ['seguro', 'Algún día yo también les mandaré postales a los míos.'], ['dulce', 'Me alegra que no les hicieras caso.']] },
       { line: 'El café de la máquina del tercero es un crimen contra la humanidad.', opts: [['gracioso', 'Deberíamos denunciarlo en La Haya.'], ['seguro', 'Mañana te subo uno de Café Ascua. Solo y sin azúcar, ¿no?'], ['dulce', 'Te hago uno yo con todo mi cariño.']] },
-      { line: 'Hoy he rechazado una oferta de una multinacional. No me preguntes por qué.', opts: [['sincero', 'No te pregunto. Pero me alegro de que te quedes.'], ['seguro', 'Porque aquí estás construyendo algo tuyo.'], ['atrevido', '¿Ha tenido algo que ver un empleado nuevo y encantador?']] },
+      { line: 'Hoy he rechazado una oferta de una multinacional. No me preguntes por qué.', opts: [['sincero', 'No te pregunto. Pero me alegro de que te quedes.'], ['seguro', 'Porque aquí estás construyendo algo tuyo.'], ['atrevido', '¿Ha tenido algo que ver cierta incorporación reciente con mucho encanto?']] },
     ],
     react: {
       love: ['Hm. Buena respuesta.', 'Me gusta la gente que no duda. Sigue así.', '...Vale, eso me ha hecho gracia. No se lo cuentes a nadie.'],
@@ -121,10 +122,10 @@ export const CHARACTERS = {
       { line: '¿Por qué yo? Hay gente más simpática en el barrio.', opts: [['sincero', 'Porque contigo no tengo que fingir. Y eso no me pasa con nadie.'], ['seguro', 'Simpáticos hay muchos. Como tú, ninguna.'], ['dulce', 'Porque eres preciosa cuando sonríes.']] },
       { line: 'Si algún día te hago daño, dímelo a la cara. Odio que me lo endulcen.', opts: [['sincero', 'Te lo prometo. Y tú a mí igual.'], ['seguro', 'Trato hecho. Sin rodeos.'], ['gracioso', '¿Por escrito y con tres copias?']] },
     ],
-    askDate: { yes: 'Viernes, a las nueve. Si llegas un minuto tarde, me voy. ...Me apetece.', no: 'No mezclo. Todavía no.' },
+    askDate: { yes: 'Ahora. Antes de que me lo piense. ...Me apetece.', no: 'No mezclo. Todavía no.' },
     confess: { yes: 'Lo he analizado desde todos los ángulos. La conclusión es sí.', no: 'Necesito más datos. Y más tiempo.' },
     propose: { yes: 'Odio las sorpresas. Excepto esta. Sí.', no: 'Esto requiere más planificación. No.' },
-    sleepover: 'Quédate. Pon la alarma a las siete. ...O mejor no la pongas.',
+    sleepover: 'Pon la alarma a las siete. ...O mejor no la pongas.',
     morning: 'Buenos días. He cancelado mi reunión de las ocho. Por primera vez en seis años.',
     breakup: 'Entendido. Sin dramas. Nos veremos en la oficina.',
     caught: 'No me expliques nada. He visto suficiente. Fuera.',
@@ -163,7 +164,7 @@ export const CHARACTERS = {
     askDate: { yes: '¿Una cita? Ya era hora. Ponte guap{o}, que yo ya lo estoy.', no: 'Todavía no me has convencido. Esfuérzate más.' },
     confess: { yes: 'Por fin. ¡Por fin! Pensaba que tendría que decírtelo yo a gritos.', no: 'Me gustas, pero no me voy a lanzar a medio cocer.' },
     propose: { yes: '¡SÍ! ¡Que se entere todo el barrio! ¡SÍ!', no: '¿Ahora? No. Esto hay que hacerlo con fuego, no así.' },
-    sleepover: 'Quédate. Mañana te hago el mejor desayuno de tu vida.',
+    sleepover: 'Ni se te ocurra irte. Hoy cierro yo la cocina... y la puerta.',
     morning: 'Despierta, dormilón. Huevos, pan tostado y café. No me lo agradezcas, cómetelo.',
     breakup: '¿Sabes qué? Bien. Que te vaya bonito. (Y no vuelvas a pedir mi risotto.)',
     caught: '¡¿CON OTRA PERSONA?! ¡Fuera de mi vista antes de que te tire una sartén!',
@@ -212,7 +213,7 @@ export const CHARACTERS = {
     role: 'Estrella · Tu rival en la oficina',
     bio: 'Orgulloso, competitivo y bastante peor fingiendo indiferencia de lo que cree. Quiere triunfar sin el apellido de su padre.',
     mechanic: 'Rivalidad: ganarle en un turno de documentos sube su respeto (+6); perder lo baja (−2).',
-    look: { skin: '#ecc8a8', hair: 'spiky', hairColor: '#16161f', eyes: '#c0302a', top: 'suit', topColor: '#1e2230', bottom: 'pants', bottomColor: '#1e2230', shoesColor: '#121214', acc: [], height: 1.06 },
+    look: { skin: '#ecc8a8', hair: 'spiky', hairColor: '#16161f', eyes: '#c0302a', top: 'suit', topColor: '#1e2230', tie: '#2a4ac8', bottom: 'pants', bottomColor: '#1e2230', shoesColor: '#121214', acc: [], height: 1.06 },
     schedule: [[8, 20, 'office_ren'], [20, 23, 'plaza_bench'], [23, 24, null], [0, 8, null]],
     tones: { fav: ['seguro', 'gracioso'], hate: ['dulce'] },
     gifts: { love: ['energetica'], like: ['cafe', 'plato:curry'], hate: ['flores'] },
@@ -221,7 +222,7 @@ export const CHARACTERS = {
       { line: 'Ayer terminé 400 expedientes. Mi récord. No es que me importe lo que pienses.', opts: [['seguro', 'Hoy haré 401. Solo por fastidiarte.'], ['gracioso', '¿Cuatrocientos? ¿Duermes en la impresora?'], ['dulce', 'Es impresionante. De verdad.']] },
       { line: 'Mi padre dirigía una empresa enorme. Quiero llegar más alto que él, y sin su apellido.', opts: [['sincero', 'Lo harás. Se nota que te lo tomas en serio.'], ['seguro', 'Entonces compite conmigo. Te vendrá bien.'], ['gracioso', 'Cambiarte el apellido sería más rápido.']] },
       { line: 'No he traído comida. No es que esté esperando que me invites. Que no.', opts: [['gracioso', 'Claro, claro. Tu estómago ruge por casualidad.'], ['dulce', 'Tengo un onigiri de sobra. Toma.'], ['seguro', 'Vamos a comer. Pago yo, pero la próxima te toca.']] },
-      { line: 'Valeria me ha dicho que tengo "potencial". Seguro que a ti te lo dice también.', opts: [['sincero', 'No, a mí me ha dicho que pongo demasiados emojis.'], ['seguro', 'Potencial tenemos los dos. Veremos quién lo usa.'], ['gracioso', 'A mí me ha dicho "potencial"... de mejora.']] },
+      { line: 'Valeria me ha dicho que tengo "potencial". Seguro que a ti te lo dice también.', opts: [['sincero', 'Me alegro. Te lo has ganado a pulso.'], ['seguro', 'Potencial tenemos los dos. Veremos quién lo usa.'], ['gracioso', 'A mí me ha dicho "potencial"... de mejora.']] },
       { line: 'Por la noche corro diez kilómetros. Para pensar. O para no pensar.', opts: [['seguro', 'Mañana corro contigo. Y te gano.'], ['sincero', '¿En qué no quieres pensar?'], ['atrevido', 'Conozco otras maneras de no pensar...']] },
       { line: 'He visto una película romántica. Por error. No me ha gustado. No he llorado.', opts: [['gracioso', 'Tienes los ojos rojos de "no llorar".'], ['sincero', 'No pasa nada por emocionarse, Ren.'], ['atrevido', 'Si necesitas a alguien con quien verla otra vez...']] },
     ],
@@ -235,10 +236,10 @@ export const CHARACTERS = {
       { line: 'No se me da bien decir lo que siento. Así que... toma. Es un bolígrafo. Era de mi primer trabajo.', opts: [['sincero', 'Es el mejor regalo que podías hacerme.'], ['dulce', 'Lo voy a guardar siempre.'], ['gracioso', '¿Esto significa que te rindes como rival?']] },
       { line: 'Si algún día me superas en el trabajo... no me importará. Mucho.', opts: [['seguro', 'Te superaré. Y seguirás aquí a mi lado.'], ['sincero', 'No quiero superarte. Quiero que lleguemos los dos.'], ['gracioso', 'Te haré un trofeo de consolación.']] },
     ],
-    askDate: { yes: '¿Una cita? ...No es que me haga ilusión. Vale. A las ocho. No llegues tarde.', no: '¿Q-qué dices? No. Todavía no. ¡No me mires así!' },
-    confess: { yes: 'Idiota... Llevo semanas intentando decírtelo yo. Sí.', no: 'No... no estoy listo. Lo siento.' },
+    askDate: { yes: '¿Una cita? ...No es que me haga ilusión. Vale. Pero ahora, que luego me arrepiento.', no: '¿Q-qué dices? No. Todavía no. ¡No me mires así!' },
+    confess: { yes: 'Idiota... me has ganado otra vez. Iba a decírtelo yo. Sí.', no: 'No... no estoy listo. Lo siento.' },
     propose: { yes: 'Esta vez me has ganado. Y no me importa perder. Sí.', no: 'Es demasiado. No puedo. Todavía no.' },
-    sleepover: 'Quédate. No es que no quiera que te vayas. Es que es tarde. Ya está.',
+    sleepover: 'Es tarde. No es que no quiera que te vayas. Es que... es tarde. Ya está.',
     morning: 'He hecho café. Para dos. Por casualidad.',
     breakup: 'Ya. Bien. Al menos ahora te podré ganar sin remordimientos.',
     caught: 'Sabía que no podía fiarme de nadie. Gracias por recordármelo.',
@@ -251,7 +252,7 @@ export const CHARACTERS = {
     mechanic: 'Incógnito: si le recuerdas su pasado de idol, su afinidad baja (−8). Valora la normalidad por encima de todo.',
     look: { skin: '#f3d6be', hair: 'messy', hairColor: '#e8d27a', eyes: '#4a7ac8', top: 'hoodie', topColor: '#7a8aa0', bottom: 'pants', bottomColor: '#2a2a34', shoesColor: '#f0f0f0', acc: ['mask'], height: 1.03 },
     schedule: [[10, 14, 'super_aisle'], [14, 19, 'plaza_fountain'], [19, 1, 'plaza_fountain2'], [1, 10, null]],
-    tones: { fav: ['gracioso', 'dulce'], hate: ['incognito'], hateEarly: ['atrevido'] },
+    tones: { fav: ['gracioso', 'dulce'], hate: ['incognito'], hateEarly: ['atrevido'], publicShy: true },
     gifts: { love: ['plato:tarta'], like: ['onigiri', 'gorra'], hate: [] },
     greet: ['Shh... ¿me ha reconocido alguien? No, ¿verdad?', '¡Hola! Hoy he comprado pan yo solo. Sin guardaespaldas. Todo un logro.', 'Ey. ¿Qué tal tu día? Cuéntame algo normal, por favor.'],
     topics: [
@@ -276,7 +277,7 @@ export const CHARACTERS = {
     askDate: { yes: '¿Una cita? ¿Normal? ¿Como la gente normal? ¡Sí! ¡Me encantaría!', no: 'Ahora mismo me da un poco de miedo... perdona.' },
     confess: { yes: 'He cantado delante de cincuenta mil personas y nunca había estado tan nervioso. Sí.', no: 'Me gustas... pero tengo miedo de estropearlo.' },
     propose: { yes: 'Sí. Y esta vez no es para la cámara. Es para siempre.', no: 'Todavía estoy aprendiendo a vivir. Dame un poco más.' },
-    sleepover: 'Quédate. Te canto algo bajito para que te duermas. Solo para ti.',
+    sleepover: 'Te canto algo bajito para que te duermas. Solo para ti. Nadie más lo ha oído.',
     morning: 'Buenos días. Te he hecho tortitas. Solo se me han quemado tres.',
     breakup: 'Vale. Ya estoy acostumbrado a que las cosas bonitas se terminen.',
     caught: 'Pensaba que contigo era distinto. Me equivoqué.',
@@ -291,13 +292,13 @@ export const CHARACTERS = {
     schedule: [[6, 19, 'goro_garden'], [19, 24, null], [0, 6, null]],
     tones: { fav: ['sincero'], hate: ['atrevido'] },
     gifts: { love: ['matcha'], like: ['fruta', 'suculenta'], hate: ['energetica'] },
-    greet: ['El rocío no se seca con prisas, joven.', 'Ah, el aprendiz. ¿Has barrido hoy tu alma? ¿Y tu entrada?', 'Siéntate. O no te sientes. Ambas cosas son lecciones.'],
+    greet: ['El rocío no se seca con prisas, joven.', 'Ah, aprendiz. ¿Has barrido hoy tu alma? ¿Y tu entrada?', 'Siéntate. O no te sientes. Ambas cosas son lecciones.'],
     topics: [
       { line: 'Una casa limpia es una mente limpia. Una mente limpia... también necesita fregona.', opts: [['sincero', 'Lo intentaré, sensei.'], ['gracioso', '¿Y si mi mente es más de mopa?'], ['seguro', 'Mañana mi casa brillará como su calva, sensei.']] },
       { line: 'Fui campeón tres veces. Ahora mi mayor rival es el pulgón.', opts: [['gracioso', '¿Ha probado con una patada voladora?'], ['sincero', 'Debe de echar de menos los combates.'], ['dulce', 'Sus rosas tienen suerte de tenerle.']] },
       { line: 'El bambú se dobla, pero no se rompe. Tú, en cambio, tienes pinta de romperte.', opts: [['sincero', 'Probablemente. Pero estoy aprendiendo.'], ['gracioso', 'Me rompo, pero con estilo.'], ['seguro', 'Póngame a prueba.']] },
       { line: 'La paciencia es como el té. Si la fuerzas, amarga.', opts: [['sincero', 'Gracias, sensei. Lo tendré en cuenta.'], ['gracioso', 'Entonces yo soy un expreso doble.'], ['dulce', '¿Me invita a uno? Al té, digo.']] },
-      { line: 'Las mujeres de este barrio son fuertes. Y los hombres... se esfuerzan.', opts: [['gracioso', 'Me esforzaré, sensei.'], ['sincero', 'Todos podemos aprender de ellas.'], ['atrevido', 'Ya me he fijado en lo fuertes que son, ya...']] },
+      { line: 'En este barrio la gente es fuerte. Unos lo saben y otros todavía no.', opts: [['gracioso', '¿Y yo de qué grupo soy, sensei?'], ['sincero', 'Todos podemos aprender unos de otros.'], ['seguro', 'Del primero. Pronto lo verá.']] },
     ],
     react: {
       love: ['Ho, ho. Hay esperanza para ti.', 'Bien dicho. Eso es tener el centro.', 'Tu espíritu está más limpio que tu ropa.'],
@@ -315,7 +316,7 @@ export const CHARACTERS = {
     schedule: [[0, 24, 'neko_spot']],
     tones: { fav: ['gracioso'], hate: [] },
     gifts: { love: ['pescado'], like: ['plato:sushi'], hate: ['verduras'] },
-    greet: ['Miau. Digo... hola, humano.', 'Llegas tarde. Los gatos siempre llegamos a tiempo. Somos el tiempo.', '¿Traes pescado? No. Qué decepción. Habla.'],
+    greet: ['Miau. Digo... hola, human{o}.', 'Llegas tarde. Los gatos siempre llegamos a tiempo. Somos el tiempo.', '¿Traes pescado? No. Qué decepción. Habla.'],
     topics: [
       { line: 'Soy el guardián de este barrio. También duermo dieciséis horas. Ambas cosas son compatibles.', opts: [['gracioso', 'Las dieciséis horas son la parte importante, ¿no?'], ['sincero', 'Gracias por cuidar de mí.'], ['dulce', '¿Te rasco detrás de la oreja?']] },
       { line: 'La fuente de la plaza tiene un fénix. Dicen que renace cada vez que alguien empieza de cero. Como tú.', opts: [['sincero', 'Ojalá funcione conmigo.'], ['gracioso', 'Si renazco, que sea con más pelo.'], ['dulce', 'Entonces ya ha empezado a funcionar.']] },
@@ -325,11 +326,13 @@ export const CHARACTERS = {
     ],
     react: {
       love: ['Prrrr. Aceptable.', 'Te concedo el honor de mi aprobación.', 'Miau. (Eso significa "bien".)'],
-      neutral: ['Hm. Miau.', 'Lo que tú digas, humano.', '*Bosteza.*'],
+      neutral: ['Hm. Miau.', 'Lo que tú digas, human{o}.', '*Bosteza.*'],
       hate: ['*Te da la espalda.*', 'Ofensivo. Ni un pescado lo arreglaría.', 'Fsss.'],
     },
   },
 };
+
+for (const [id, x] of Object.entries(EXTRA)) Object.assign(CHARACTERS[id], x);
 
 export const CHAR_ORDER = ['lucia', 'aiko', 'valeria', 'marina', 'nora', 'ren', 'kaito', 'goro', 'neko'];
 
