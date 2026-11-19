@@ -25,7 +25,7 @@ export class Player {
     this.pos = new THREE.Vector3();
     this.heading = 0; // 0 = mirando hacia la cámara (+z)
     this.speed = 0;
-    this.camDist = 15;
+    this.camDist = 14;
     this.camTarget = new THREE.Vector3();
     this.rebuild();
     const p = G.state.player.pos;
@@ -83,8 +83,9 @@ export class Player {
     // cámara
     this.camDist = clamp(this.camDist + input.consumeZoom(), 8, 24);
     this.camTarget.lerp(this.pos, Math.min(1, dt * 6));
-    camera.position.set(this.camTarget.x, this.camTarget.y + this.camDist * 0.92, this.camTarget.z + this.camDist * 0.86);
-    camera.lookAt(this.camTarget.x, this.camTarget.y + 1.0, this.camTarget.z);
+    const tilt = 0.5 + ((this.camDist - 8) / 16) * 0.45;
+    camera.position.set(this.camTarget.x, this.camTarget.y + this.camDist * tilt, this.camTarget.z + this.camDist * 0.9);
+    camera.lookAt(this.camTarget.x, this.camTarget.y + 1.4, this.camTarget.z);
     G.state.player.pos = [Math.round(this.pos.x * 100) / 100, Math.round(this.pos.z * 100) / 100];
     const z = zoneAt(this.pos.x, this.pos.z);
     if (z !== this.lastZone) { this.lastZone = z; bus.emit('zone', { zone: z }); }
@@ -95,6 +96,6 @@ export class Player {
       if (!this.blocked(x, z)) { this.pos.x = x; this.pos.z = z; return; }
     }
   }
-  teleport(v) { this.pos.set(v.x, 0, v.z); this.camTarget.copy(this.pos); this.unstick(); }
+  teleport(v) { this.pos.set(v.x, 0, v.z); this.camTarget.copy(this.pos); if (this.blocked(this.pos.x, this.pos.z)) this.unstick(); }
   faceTowards(v) { this.heading = Math.atan2(v.x - this.pos.x, v.z - this.pos.z); this.ch.root.rotation.y = this.heading; }
 }

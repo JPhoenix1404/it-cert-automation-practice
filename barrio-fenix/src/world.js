@@ -1,6 +1,7 @@
 // Construcción del barrio: terreno, edificios "casa de muñecas", props, cielo y luces.
 import * as THREE from '../vendor/three.module.min.js';
 import { StaticBatch, toon, canvasTexture, OUTLINE_MAT } from './toon.js';
+import { mergeGeometries } from '../vendor/BufferGeometryUtils.js';
 import { G, clamp, lerp } from './game.js';
 import { skyAt, daylight, hourFloat } from './time.js';
 
@@ -28,9 +29,9 @@ export const SPOTS = {
   goro_garden: V(-31, 0, 9.5), plaza_bench: V(6.5, 0, 7.5), plaza_bench2: V(-7.5, 0, -7.2),
   plaza_fountain: V(3.8, 0, 3.6), plaza_fountain2: V(-4.2, 0, 3.2), plaza_stage: V(-7.8, 0, 7.8),
   board: V(8.5, 0, -9.5),
-  super_checkout: V(-6, 0, -30.9), super_aisle: V(2.6, 0, -33), super_front: V(0, 0, -24),
+  super_checkout: V(-6, 0, -30.9), super_aisle: V(3.4, 0, -34.2), super_front: V(0, 0, -24),
   office_valeria: V(37, 0, -11.2), office_ren: V(33, 0, -9.2), cafe_counter: V(26.8, 0, -10.2), trabajo_front: V(27, 0, 4),
-  llama_kitchen: V(12, 0, 24.6), llama_table: V(14.2, 0, 30.2), llama_terrace: V(6, 0, 38.5), cine: V(-12, 0, 31),
+  llama_kitchen: V(12, 0, 24.6), llama_table: V(14.2, 0, 31.0), llama_terrace: V(6, 0, 38.5), cine: V(-12, 0, 31),
   feather_0: V(-38, 0, 15), feather_1: V(-11.5, 0, -11.5), feather_2: V(-16, 0, -21.5), feather_3: V(43, 0, 15), feather_4: V(-17, 0, 43),
 };
 
@@ -70,7 +71,8 @@ export class World {
     this.doorBlocks = {};     // id → collider
     this.gateBlocks = {};     // zone → collider
     this.gateMeshes = {};
-    this.glow = { lamps: toon('#ffe9a8', { emissive: '#ffcf6a', emissiveIntensity: 0, unique: true }), lanterns: toon('#ff7a4a', { emissive: '#ff5a2a', emissiveIntensity: 0, unique: true }) };
+    this.glow = { lamps: toon('#ffe9a8', { emissive: '#ffcf6a', emissiveIntensity: 0, unique: true }), lanterns: toon('#ff7a4a', { emissive: '#ff5a2a', emissiveIntensity: 0, unique: true }), windows: toon('#9ad0ff', { emissive: '#ffc070', emissiveIntensity: 0, unique: true }) };
+    this.strings = [];
     this.time = 0;
     this.build();
   }
@@ -157,7 +159,7 @@ export class World {
     this.scene.add(this.sun); this.scene.add(this.sun.target);
     // farolas de la plaza (pocas luces reales; el resto es emisivo)
     this.nightLights = [];
-    for (const [x, z, col] of [[-9, 9, 0xffc070], [9, -9, 0xffc070], [0, 0, 0xff9a5a], [-26, -2, 0xffd090]]) {
+    for (const [x, z, col] of [[0, 0, 0xff9a5a], [-30, -2.5, 0xffd090]]) {
       const l = new THREE.PointLight(col, 0, 16, 1.6); l.position.set(x, 3.2, z); this.scene.add(l); this.nightLights.push(l);
     }
     this.scene.fog = new THREE.Fog(0xc8d8f0, 70, 240);
@@ -181,11 +183,11 @@ export class World {
     B.geo(new THREE.CylinderGeometry(9, 9, 0.06, 48), '#dccbb0', 0, 0.03, 0, { outline: false });
     for (const k of ['casaConn', 'superConn', 'trabajoConn', 'restauranteConn']) pave(RECTS[k], '#d8ccb6');
     // caminos interiores
-    pave([-46, -4, -18, 4], '#d8ccb6'); pave([-28, -4.5, -24, -3.6], '#cbbba0', 0.03); pave([-41.5, -4.5, -37.5, -3.6], '#cbbba0', 0.03);
-    pave([-4, -46, 4, -18], '#d8ccb6'); pave([-20, -28, 20, -18], '#b9b3ad');
+    pave([-46, -4, -18, 4], '#d8ccb6', 0.015); pave([-28, -4.5, -24, -3.6], '#cbbba0', 0.03); pave([-41.5, -4.5, -37.5, -3.6], '#cbbba0', 0.03);
+    pave([-4, -46, 4, -18], '#d8ccb6', 0.03); pave([-20, -28, 20, -18], '#b9b3ad', 0.015);
     for (let x = -18; x <= 18; x += 4) if (Math.abs(x) > 5) B.box(0.15, 0.05, 4, '#f4f0e6', x, 0.05, -21, 0, { outline: false });
-    pave([18, -4, 46, 4], '#d8ccb6'); pave([22, -1, 34, 10], '#cfc4b0');
-    pave([-4, 18, 4, 46], '#d8ccb6'); pave([1, 34, 19, 43], '#b88a60'); pave([-18, 26, -6, 36], '#c8bca8');
+    pave([18, -4, 46, 4], '#d8ccb6', 0.015); pave([22, -1, 34, 10], '#cfc4b0', 0.03);
+    pave([-4, 18, 4, 46], '#d8ccb6', 0.015); pave([1, 34, 19, 43], '#b88a60', 0.03); pave([-18, 26, -6, 36], '#c8bca8', 0.03);
     const g = B.build({ castShadow: false });
     this.scene.add(g);
   }
@@ -223,14 +225,14 @@ export class World {
   }
 
   tree(B, x, z, kind = 'sakura', s = 1, collide = true) {
-    const trunk = '#7a5236';
-    B.geo(new THREE.CylinderGeometry(0.18 * s, 0.28 * s, 2.2 * s, 7), trunk, x, 1.1 * s, z);
+    const trunk = '#7a5236', o = this.cheap ? { outline: false } : {};
+    B.geo(new THREE.CylinderGeometry(0.18 * s, 0.28 * s, 2.2 * s, 7), trunk, x, 1.1 * s, z, o);
     if (kind === 'pine') {
-      for (let i = 0; i < 3; i++) B.geo(new THREE.ConeGeometry((1.8 - i * 0.45) * s, 1.8 * s, 8), '#2f7a4a', x, (2.2 + i * 1.1) * s, z);
+      for (let i = 0; i < 3; i++) B.geo(new THREE.ConeGeometry((1.8 - i * 0.45) * s, 1.8 * s, 8), '#2f7a4a', x, (2.2 + i * 1.1) * s, z, o);
     } else {
       const col = kind === 'sakura' ? ['#ffb7cc', '#ffc9d8', '#f6a2bd'] : ['#5aa85a', '#6cba62', '#4c9a50'];
       const blobs = [[0, 3.0, 0, 1.5], [0.9, 2.6, 0.3, 1.1], [-0.9, 2.7, -0.2, 1.15], [0.2, 3.6, -0.5, 1.0], [-0.3, 2.5, 0.9, 1.0]];
-      blobs.forEach(([bx, by, bz, r], i) => B.geo(new THREE.IcosahedronGeometry(1, 1), col[i % 3], x + bx * s, by * s, z + bz * s, { sx: r * s, sy: r * s * 0.85, sz: r * s }));
+      blobs.forEach(([bx, by, bz, r], i) => B.geo(new THREE.IcosahedronGeometry(1, this.cheap ? 0 : 1), col[i % 3], x + bx * s, by * s, z + bz * s, { sx: r * s, sy: r * s * 0.85, sz: r * s, ...o }));
     }
     if (collide) this.addCircle(x, z, 0.45 * s);
   }
@@ -247,6 +249,17 @@ export class World {
     const w = Math.abs(Math.cos(ry)) > 0.5 ? [1.0, 0.35] : [0.35, 1.0];
     this.addBox(x - w[0], z - w[1], x + w[0], z + w[1]);
   }
+  chair(B, x, z, ry = 0) {
+    B.box(0.45, 0.06, 0.45, '#8a5a34', x, 0.45, z, ry, { outline: false });
+    B.box(0.45, 0.45, 0.06, '#8a5a34', x - Math.sin(ry) * 0.2, 0.7, z - Math.cos(ry) * 0.2, ry, { outline: false });
+    B.box(0.38, 0.44, 0.38, '#3a3a40', x, 0.22, z, ry, { outline: false });
+  }
+  car(B, x, z, color, ry = 0) {
+    B.box(1.8, 0.7, 3.8, color, x, 0.55, z, ry, { thickness: 0.03 });
+    B.box(1.6, 0.6, 2.0, '#dfe8f2', x, 1.15, z + (Math.cos(ry) > 0 ? -0.2 : 0.2), ry, { thickness: 0.03 });
+    for (const sx of [-0.9, 0.9]) for (const sz of [-1.2, 1.2]) B.geo(new THREE.CylinderGeometry(0.33, 0.33, 0.25, 12), '#1e1e24', x + sx, 0.33, z + sz, { rz: PI / 2, outline: false });
+    this.addBox(x - 1, z - 2, x + 1, z + 2);
+  }
   flowers(B, x, z, w, d, colors = ['#ff6a8a', '#ffd34d', '#ffffff', '#b07aff']) {
     B.box(w, 0.3, d, '#7a5a3a', x, 0.15, z, 0, { outline: false });
     for (let i = 0; i < w * d * 3; i++) B.geo(new THREE.IcosahedronGeometry(0.14, 0), colors[i % colors.length], x + (Math.random() - 0.5) * (w - 0.3), 0.42, z + (Math.random() - 0.5) * (d - 0.3), { outline: false });
@@ -256,11 +269,12 @@ export class World {
   buildPlaza(B) {
     // Fuente del Fénix
     B.geo(new THREE.CylinderGeometry(3.6, 3.8, 0.6, 32), '#c9b9a0', 0, 0.3, 0);
-    B.geo(new THREE.CylinderGeometry(3.2, 3.2, 0.62, 32), '#b0a088', 0, 0.32, 0, { outline: false });
+    B.geo(new THREE.CylinderGeometry(3.2, 3.2, 0.3, 32), '#8a9aa8', 0, 0.2, 0, { outline: false });
     B.geo(new THREE.CylinderGeometry(0.6, 0.9, 1.6, 12), '#c9b9a0', 0, 1.0, 0);
     this.addCircle(0, 0, 3.9);
     const water = new THREE.Mesh(new THREE.CylinderGeometry(3.15, 3.15, 0.1, 32), toon('#7fd0f0', { transparent: true, opacity: 0.8, unique: true }));
-    water.position.y = 0.58; this.scene.add(water); this.water = water;
+    water.position.y = 0.48; this.scene.add(water); this.water = water;
+    this.buildJet();
     // Fénix (estatua dorada)
     const fenix = new StaticBatch();
     const gold = '#f0b23a', fire = '#ff6a3a';
@@ -290,7 +304,7 @@ export class World {
     B.geo(new THREE.CylinderGeometry(1.6, 1.7, 0.25, 20), '#8a6a8a', -8.4, 0.12, 8.4, { outline: false });
     B.box(0.5, 0.9, 0.5, '#2a2a30', -9.6, 0.45, 9.4, 0.3);
     // farolillos de papel entre farolas
-    const string = (a, b) => { for (let i = 1; i < 8; i++) { const t = i / 8; const x = lerp(a[0], b[0], t), z = lerp(a[1], b[1], t); const y = 3.4 - Math.sin(t * PI) * 0.7; this.lanternPos.push([x, y, z]); } };
+    const string = (a, b) => { const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; const x = lerp(a[0], b[0], t), z = lerp(a[1], b[1], t); const y = 3.45 - Math.sin(t * PI) * 0.7; pts.push(new THREE.Vector3(x, y + 0.22, z)); if (i > 0 && i < 8) this.lanternPos.push([x, y, z]); } this.strings.push(pts); };
     string([-9, 9], [9, 9]); string([9, -9], [-9, -9]); string([-9, -9], [-9, 9]); string([9, -9], [9, 9]);
   }
 
@@ -317,6 +331,8 @@ export class World {
     for (const [x, z] of [[-14, -24], [14, -24], [-14, -42], [14, -42]]) this.lamp(B, x, z);
     for (const [x, z, k] of [[-18, -44, 'pine'], [18, -44, 'pine'], [-18, -30, 'green'], [18, -30, 'sakura']]) this.tree(B, x, z, k, 0.85);
     B.box(1.2, 1.9, 0.9, '#d8344a', 12, 0.95, -27.4, 0); B.box(0.9, 1.0, 0.05, '#ffe0a0', 12, 1.25, -26.94, 0, { outline: false }); this.addBox(11.4, -27.9, 12.6, -26.9);
+    this.car(B, -15, -21.5, '#e8443a'); this.car(B, 7.5, -21.5, '#4a8ad8'); this.car(B, 15.5, -21.5, '#f2f2f2');
+    B.box(1.0, 1.9, 0.9, '#3a8ad8', 13.4, 0.95, -27.4, 0); B.box(0.7, 1.0, 0.05, '#cfe8ff', 13.4, 1.25, -26.94, 0, { outline: false }); this.addBox(12.9, -27.9, 13.9, -26.9);
     for (let i = 0; i < 4; i++) B.box(0.8, 0.9, 1.2, '#9aa0aa', -13 + i * 0.25, 0.5, -26.5 + i * 0.05, 0, { thickness: 0.02 });
     this.addBox(-13.5, -27.2, -11.8, -25.8);
   }
@@ -327,7 +343,12 @@ export class World {
     this.flowers(B, 36, 2.4, 6, 1.2, ['#ffd34d', '#ff8a5a']);
     this.bench(B, 31, 9.5, 0); this.bench(B, 38, 9.5, 0);
     // fuente moderna
-    B.box(3, 0.5, 3, '#c0c6d0', 40, 0.25, 11, 0); this.addBox(38.5, 9.5, 41.5, 12.5);
+    B.geo(new THREE.CylinderGeometry(1.6, 1.7, 0.5, 20), '#c0c6d0', 40, 0.25, 11); this.addCircle(40, 11, 1.7);
+    B.geo(new THREE.CylinderGeometry(1.4, 1.4, 0.06, 20), '#7fd0f0', 40, 0.5, 11, { outline: false });
+    B.geo(new THREE.TorusKnotGeometry(0.45, 0.12, 48, 8), '#e8b84a', 40, 1.5, 11);
+    for (const [x, z] of [[24, 12], [26, 12], [42, 4.5]]) { B.geo(new THREE.CylinderGeometry(0.5, 0.4, 0.7, 10), '#8a8a94', x, 0.35, z); B.geo(new THREE.IcosahedronGeometry(0.6, 1), '#4c9a50', x, 1.0, z); this.addCircle(x, z, 0.55); }
+    for (let i = 0; i < 4; i++) { B.geo(new THREE.TorusGeometry(0.35, 0.05, 6, 14), '#2a2a30', 34 + i * 0.9, 0.4, 14, { outline: false }); B.geo(new THREE.TorusGeometry(0.35, 0.05, 6, 14), '#2a2a30', 34 + i * 0.9, 0.4, 15.2, { outline: false }); B.box(0.06, 0.06, 1.2, ['#e8443a', '#4a8ad8', '#ffd34d', '#7ad07a'][i], 34 + i * 0.9, 0.75, 14.6, 0, { outline: false }); }
+    this.addBox(33.5, 13.6, 37.4, 15.6);
   }
 
   buildRestaurante(B) {
@@ -339,23 +360,35 @@ export class World {
       B.geo(new THREE.ConeGeometry(1.5, 0.6, 10), x % 2 > 1 ? '#c8443a' : '#f4efe4', x, 2.5, z); B.geo(new THREE.CylinderGeometry(0.04, 0.04, 2.3, 5), '#3a3a40', x, 1.6, z, { outline: false });
       this.addCircle(x, z, 0.7);
     }
-    for (let i = 0; i < 10; i++) this.lanternPos.push([3 + i * 1.5, 3.1 - Math.sin((i / 9) * PI) * 0.5, 34.6]);
+    { const pts = []; for (let i = 0; i < 10; i++) { const y = 3.1 - Math.sin((i / 9) * PI) * 0.5; this.lanternPos.push([3 + i * 1.5, y, 34.6]); pts.push(new THREE.Vector3(3 + i * 1.5, y + 0.22, 34.6)); } this.strings.push(pts); }
+    for (const [x, z] of [[5.5, 37], [10, 38.5], [14.5, 37], [7.5, 41.5], [13, 41.8]]) for (const a of [0, 2.1, 4.2]) this.chair(B, x + Math.cos(a) * 1.0, z + Math.sin(a) * 1.0, -a + PI / 2);
     // cine al aire libre
     B.box(8, 4, 0.2, '#f6f6f6', -12, 2.6, 25.5, 0); B.box(8.4, 4.4, 0.15, '#2a2a30', -12, 2.6, 25.4, 0, { outline: false });
     for (const sx of [-4, 4]) B.box(0.25, 4.8, 0.25, '#2a2a30', -12 + sx, 2.4, 25.4, 0);
     this.addBox(-16.2, 25.2, -7.8, 25.8);
-    this.bench(B, -14, 30, 0); this.bench(B, -10, 30, 0); this.bench(B, -14, 33, 0); this.bench(B, -10, 33, 0);
+    this.bench(B, -14, 30, PI); this.bench(B, -10, 30, PI); this.bench(B, -14, 33, PI); this.bench(B, -10, 33, PI);
   }
 
   buildSurroundings(B) {
     // anillo de árboles fuera de los límites + edificios lejanos
     const inside = (x, z) => Object.values(RECTS).some((r) => x > r[0] - 2 && x < r[2] + 2 && z > r[1] - 2 && z < r[3] + 2);
     let n = 0;
+    const FB = new StaticBatch(); this.cheap = true;
     for (let i = 0; i < 900 && n < 120; i++) {
       const x = (Math.random() - 0.5) * 130, z = (Math.random() - 0.5) * 130;
       if (inside(x, z)) continue;
-      this.tree(B, x, z, ['sakura', 'green', 'pine', 'green'][n % 4], 0.8 + Math.random() * 0.6, false); n++;
+      this.tree(FB, x, z, ['sakura', 'green', 'pine', 'green'][n % 4], 0.8 + Math.random() * 0.6, false); n++;
     }
+    this.cheap = false;
+    this.scene.add(FB.build({ castShadow: false }));
+    // cables de los farolillos
+    for (const pts of this.strings) B.geo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.025, 4), '#2a2226', 0, 0, 0, { outline: false });
+    // charcos de luz bajo las farolas (una sola malla aditiva)
+    const poolTex = canvasTexture(64, 64, (c) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,200,120,0.9)'); g.addColorStop(1, 'rgba(255,170,80,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); });
+    const discs = this.lampBulbs.map(([x, , z]) => { const g = new THREE.CircleGeometry(3.2, 20); g.rotateX(-PI / 2); g.translate(x, 0.09, z); return g; });
+    this.poolMat = new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const pools = new THREE.Mesh(mergeGeometries(discs), this.poolMat); pools.renderOrder = 1;
+    this.scene.add(pools);
     // edificios del horizonte
     const tex = canvasTexture(128, 256, (c) => {
       c.fillStyle = '#ffffff'; c.fillRect(0, 0, 128, 256);
@@ -417,8 +450,9 @@ export class World {
     cover.box(doorW, H - 2.4, T, b.wall, b.doorX, 2.4 + (H - 2.4) / 2, z2, 0, { thickness: 0.05 });
     cover.box(W, 0.35, T + 0.04, darkerHex(b.wall), cx, 0.17, z2, 0, { outline: false });
     // ventanas en fachada
+    const winB = new StaticBatch();
     for (let wx = x1 + 1.6; wx < x2 - 1; wx += 3) if (Math.abs(wx - b.doorX) > 2) {
-      cover.box(1.4, 1.1, 0.05, '#9ad0ff', wx, 1.9, z2 + 0.18, 0, { outline: false });
+      winB.box(1.4, 1.1, 0.05, '#ffffff', wx, 1.9, z2 + 0.18, 0, { outline: false });
       cover.box(1.6, 0.1, 0.12, '#ffffff', wx, 1.3, z2 + 0.2, 0, { outline: false });
     }
     // marco puerta
@@ -434,6 +468,7 @@ export class World {
     const outMat = OUTLINE_MAT.clone(); outMat.transparent = true;
     const cg = cover.build({ material: coverMat });
     if (cg.userData.outline) cg.userData.outline.material = outMat;
+    const wg = winB.build({ material: this.glow.windows, castShadow: false }); cg.add(wg); cg.userData.win = wg;
     // letrero
     if (b.sign) {
       const tex = canvasTexture(512, 96, (c) => {
@@ -442,8 +477,9 @@ export class World {
         c.fillText(b.sign, 256, 52, 480);
       });
       const signMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
-      const sign = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(W - 1, 8), Math.min(W - 1, 8) * 96 / 512), signMat);
-      sign.position.set(cx, H - 0.45, z2 + 0.2);
+      const sh = 0.8, sw = Math.min(W - 1, sh * 512 / 96 * 1.3);
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(sw, sw * 96 / 512), signMat);
+      sign.position.set(cx, 2.95, z2 + 0.22);
       cg.add(sign); cg.userData.sign = signMat;
     }
     // puerta (cerrada si fuera de horario)
@@ -484,8 +520,9 @@ export class World {
       I.box(1.2, 0.2, 0.5, '#ffffff', -21.3, 0.82, -12.6, 0, { outline: false });
       // sofá + mesa + alfombra + TV
       this.sofaGroup = new StaticBatch();
-      box(1.0, 0.5, 2.4, '#c8705a', -29.8, 0.25, -6.6);
-      I.box(0.3, 0.9, 2.4, '#b8604a', -30.25, 0.6, -6.6, 0);
+      this.addBox(-30.3, -7.8, -29.3, -5.4);
+      for (const [fx, c] of [[-27.5, '#ffb7cc'], [-21.5, '#7ec8ff']]) { I.box(1.0, 0.75, 0.05, '#6a4a34', fx, 2.2, -13.3, 0, { outline: false }); I.box(0.85, 0.6, 0.06, c, fx, 2.2, -13.27, 0, { outline: false }); }
+      I.box(0.06, 0.5, 1.6, '#8a5a34', -31.8, 1.8, -9.5, 0, { outline: false }); for (let i = 0; i < 5; i++) I.box(0.25, 0.32, 0.12, ['#e8443a', '#4a8ad8', '#ffd34d', '#7ad07a', '#b07aff'][i], -31.65, 2.2, -10.1 + i * 0.28, 0, { outline: false });
       I.box(4, 0.03, 3, '#e8d4a8', -27.2, 0.14, -7.4, 0, { outline: false });
       box(0.9, 0.4, 1.4, '#a07a4a', -27.6, 0.2, -6.8);
       box(0.4, 1.0, 1.8, '#2a2a30', -24.9, 0.5, -6.8);
@@ -538,6 +575,7 @@ export class World {
       I.box(0.6, 0.4, 0.5, '#d8344a', 26.6, 1.3, -9.5, 0);
       box(5, 2.2, 0.5, '#4a3424', 27, 1.1, -12.6);
       for (let i = 0; i < 6; i++) I.geo(new THREE.CylinderGeometry(0.12, 0.1, 0.3, 8), ['#f4f4f4', '#d8b080', '#8a5a3a'][i % 3], 25 + i * 0.8, 2.4, -12.5, { outline: false });
+      for (const [x, z] of [[25.5, -4], [28.5, -4]]) for (const sx of [-0.8, 0.8]) this.chair(I, x + sx, z, sx > 0 ? -PI / 2 : PI / 2);
       for (const [x, z] of [[25.5, -4], [28.5, -4]]) { I.geo(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 14), '#f4efe4', x, 0.78, z); I.geo(new THREE.CylinderGeometry(0.06, 0.06, 0.78, 6), '#3a3a40', x, 0.39, z, { outline: false }); this.addCircle(x, z, 0.55); }
       // Oficina
       I.box(9.4, 0.04, 11.6, '#9aa8b8', 35.3, 0.14, -7, 0, { outline: false });
@@ -560,9 +598,26 @@ export class World {
         box(1.2, 0.76, 1.2, '#5a3a26', x, 0.38, z);
         I.box(1.25, 0.03, 1.25, '#f4f0e6', x, 0.78, z, 0, { outline: false });
         I.geo(new THREE.CylinderGeometry(0.05, 0.05, 0.18, 6), '#fff0c8', x, 0.88, z, { outline: false });
+        for (const sx of [-0.85, 0.85]) this.chair(I, x + sx, z, sx > 0 ? -PI / 2 : PI / 2);
       }
       this.candles = [[6, 29.6], [10, 29.6], [14, 29.6], [6, 31.8], [10, 31.8]];
     }
+  }
+
+  // ---------- Chorro de la fuente ----------
+  buildJet() {
+    const n = 90, pos = new Float32Array(n * 3);
+    this.jetV = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { pos[i * 3 + 1] = -10; }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    this.jet = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfefff, size: 0.16, transparent: true, opacity: 0.85, depthWrite: false }));
+    this.jet.frustumCulled = false; this.scene.add(this.jet); this.jetI = 0;
+  }
+  updateJet(dt) {
+    const p = this.jet.geometry.attributes.position, v = this.jetV;
+    for (let k = 0; k < 3; k++) { const i = this.jetI++ % p.count; const a = Math.random() * PI * 2; p.setXYZ(i, Math.cos(a) * 0.5, 1.9, Math.sin(a) * 0.5); v[i * 3] = Math.cos(a) * 1.4; v[i * 3 + 1] = 1.2 + Math.random(); v[i * 3 + 2] = Math.sin(a) * 1.4; }
+    for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < 0.4) continue; v[i * 3 + 1] -= 6 * dt; p.setXYZ(i, p.getX(i) + v[i * 3] * dt, y + v[i * 3 + 1] * dt, p.getZ(i) + v[i * 3 + 2] * dt); }
+    p.needsUpdate = true;
   }
 
   // ---------- Barreras de biomas bloqueados ----------
@@ -583,6 +638,16 @@ export class World {
         p.position.set(horiz ? (x1 + x2) / 2 + s * len / 2 : (x1 + x2) / 2, 1.7, horiz ? (z1 + z2) / 2 : (z1 + z2) / 2 + s * len / 2);
         p.castShadow = true; g.add(p);
       }
+      const fb = new StaticBatch();
+      for (let i = 0; i <= 4; i++) { const t = -len / 2 + (i * len) / 4; fb.box(0.18, 1.2, 0.18, '#8a5a34', horiz ? (x1 + x2) / 2 + t : (x1 + x2) / 2, 0.6, horiz ? (z1 + z2) / 2 : (z1 + z2) / 2 + t, 0); }
+      for (const y of [0.45, 0.95]) fb.box(horiz ? len : 0.1, 0.14, horiz ? 0.1 : len, '#a8703e', (x1 + x2) / 2, y, (z1 + z2) / 2, 0);
+      g.add(fb.build());
+      const label = { super: 'Supermercado', trabajo: 'Trabajo', restaurante: 'Restaurante' }[zone];
+      const cost = { super: 3, trabajo: 6, restaurante: 10 }[zone];
+      const tex = canvasTexture(512, 160, (c) => { c.fillStyle = '#fff8ec'; c.beginPath(); c.roundRect(6, 6, 500, 148, 26); c.fill(); c.lineWidth = 8; c.strokeStyle = '#ff7a45'; c.stroke(); c.fillStyle = '#3a2a3a'; c.font = 'bold 46px ui-rounded, system-ui, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('🔒 ' + label, 256, 56); c.fillStyle = '#c8443a'; c.fillText(cost + ' 🔥 Fenixios', 256, 112); });
+      const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true })); sign.scale.set(3.6, 1.12, 1);
+      sign.position.set((x1 + x2) / 2, 2.6, (z1 + z2) / 2); g.add(sign);
+      mat.opacity = 0.2;
       this.scene.add(g);
       this.gateMeshes[zone] = { group: g, mat };
       this.gateBlocks[zone] = this.addBox(x1, z1, x2, z2);
@@ -631,7 +696,7 @@ export class World {
     for (let i = 0; i < n; i++) { pos[i * 3] = -31 + (Math.random() - 0.5) * 14; pos[i * 3 + 1] = 0.5 + Math.random() * 2; pos[i * 3 + 2] = 10 + (Math.random() - 0.5) * 10; }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     this.fireflyBase = pos.slice();
-    this.fireflies = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xfff08a, size: 0.18, transparent: true, opacity: 0, depthWrite: false }));
+    this.fireflies = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xfff08a, size: 0.35, map: canvasTexture(32, 32, (c) => { const gr = c.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, '#fff'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, 32, 32); }), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.scene.add(this.fireflies);
   }
 
@@ -646,7 +711,8 @@ export class World {
       const B = new StaticBatch();
       if (state.upgrades.plantas) for (const [x, z] of [[-31.4, -5.2], [-20.9, -8.4], [-26.4, -12.9]]) { B.geo(new THREE.CylinderGeometry(0.25, 0.2, 0.45, 8), '#d8a070', x, 0.23, z); B.geo(new THREE.IcosahedronGeometry(0.42, 1), '#4caa54', x, 0.8, z); }
       if (state.upgrades.lampara) { B.geo(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6), '#3a3a40', -31.3, 0.75, -8.4); B.geo(new THREE.ConeGeometry(0.35, 0.4, 10, 1, true), '#ffe0a0', -31.3, 1.6, -8.4); }
-      if (state.upgrades.sofa) { B.box(1.05, 0.55, 2.5, '#5a7ac8', -29.8, 0.28, -6.6, 0); B.box(0.32, 0.95, 2.5, '#4a6ab8', -30.25, 0.62, -6.6, 0); }
+      if (state.upgrades.sofa) { B.box(1.05, 0.55, 2.5, '#5a7ac8', -29.8, 0.28, -6.6, 0); B.box(0.32, 0.95, 2.5, '#4a6ab8', -30.25, 0.62, -6.6, 0); B.box(0.5, 0.3, 0.5, '#ffd34d', -29.6, 0.7, -5.8, 0.3); }
+      else { B.box(1.0, 0.5, 2.4, '#c8705a', -29.8, 0.25, -6.6, 0); B.box(0.3, 0.9, 2.4, '#b8604a', -30.25, 0.6, -6.6, 0); }
       if (!dirt.floor) { /* suelo brillante: sin manchas */ } else for (const [x, z, s] of [[-27, -9, 0.5], [-24.2, -11, 0.4], [-28.8, -10.8, 0.35], [-22.5, -7.6, 0.45]]) B.geo(new THREE.CylinderGeometry(s, s, 0.02, 12), '#7a6040', x, 0.13, z, { outline: false });
       const g = B.build({ castShadow: false });
       this.homeExtras.add(g);
@@ -696,12 +762,27 @@ export class World {
     this.skylineMat.emissiveIntensity = glow * 0.9;
     this.skylineMat.color.setHex(day > 0.5 ? 0xb8c0d0 : 0x3a4060);
     this.fenixMat.emissiveIntensity = 0.15 + glow * 0.45 + Math.sin(this.time * 2) * 0.05;
-    for (const l of this.nightLights) l.intensity = glow * 18;
+    for (const l of this.nightLights) l.intensity = glow * 14;
+    this.poolMat.opacity = glow * 0.75;
+    this.glow.windows.emissiveIntensity = glow * 0.9;
+    this.glow.windows.color.setHex(glow > 0.3 ? 0xffe0a0 : 0x9ad0ff);
+    // luz cálida de interior cuando el jugador está dentro de un edificio
+    const inside = Object.values(this.covers).some((c) => c.opacity < 0.5);
+    this.interiorK = (this.interiorK || 0) + ((inside ? 1 : 0) - (this.interiorK || 0)) * Math.min(1, dt * 4);
+    const ik = this.interiorK * Math.max(0.35, night);
+    if (ik > 0.01) {
+      this.hemi.color.lerp(new THREE.Color(0xffe6c8), ik * 0.85);
+      this.hemi.groundColor.lerp(new THREE.Color(0xa08060), ik * 0.7);
+      this.hemi.intensity = lerp(this.hemi.intensity, 1.15, ik);
+      this.sun.intensity *= 1 - ik * 0.6;
+    }
+    this.petals.visible = !inside;
     if (this.homeLamp) this.homeLamp.intensity = glow * 8;
     this.fireflies.material.opacity = glow * 0.9;
     if (glow > 0.05) { const p = this.fireflies.geometry.attributes.position; for (let i = 0; i < p.count; i++) { p.setY(i, this.fireflyBase[i * 3 + 1] + Math.sin(this.time * 1.3 + i) * 0.3); p.setX(i, this.fireflyBase[i * 3] + Math.sin(this.time * 0.7 + i * 2) * 0.4); } p.needsUpdate = true; }
     // agua
-    this.water.position.y = 0.58 + Math.sin(this.time * 2) * 0.01;
+    this.water.position.y = 0.48 + Math.sin(this.time * 2) * 0.01;
+    this.updateJet(dt);
     // pétalos alrededor del jugador
     const pp = this.petals.geometry.attributes.position;
     for (let i = 0; i < pp.count; i++) {
@@ -712,7 +793,7 @@ export class World {
     }
     pp.needsUpdate = true;
     // barreras palpitantes
-    for (const g of Object.values(this.gateMeshes)) g.mat.opacity = 0.25 + Math.sin(this.time * 2.5) * 0.1;
+    for (const g of Object.values(this.gateMeshes)) g.mat.opacity = 0.14 + Math.sin(this.time * 2.5) * 0.06;
     // plumas
     for (const f of this.feathers) if (f.visible) { f.rotation.y += dt * 1.5; f.position.y = 1.2 + Math.sin(this.time * 2 + f.position.x) * 0.15; }
     this.featherMat.emissiveIntensity = 0.5 + glow * 1.2;
@@ -720,13 +801,15 @@ export class World {
     for (const [id, c] of Object.entries(this.covers)) {
       const r = BUILDINGS[id].rect;
       const inside = playerPos && playerPos.x > r[0] - 0.2 && playerPos.x < r[2] + 0.2 && playerPos.z > r[1] - 0.2 && playerPos.z < r[3] + 0.6;
-      const target = inside ? 0 : 1;
+      const behind = playerPos && playerPos.x > r[0] - 1 && playerPos.x < r[2] + 1 && playerPos.z > r[1] - 7 && playerPos.z <= r[1] + 0.2;
+      const target = inside ? 0 : behind ? 0.25 : 1;
       c.opacity += (target - c.opacity) * Math.min(1, dt * 6);
       c.mat.opacity = c.opacity; c.out.opacity = c.opacity;
       c.mat.depthWrite = c.opacity > 0.95;
       c.group.visible = c.opacity > 0.02;
       if (c.group.userData.sign) c.group.userData.sign.opacity = c.opacity;
       c.doorMat.opacity = c.opacity;
+      if (c.group.userData.win) c.group.userData.win.visible = c.opacity > 0.6;
     }
   }
 }

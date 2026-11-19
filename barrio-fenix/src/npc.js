@@ -17,27 +17,68 @@ function buildingAt(v) {
 function doorOut(id) { const b = BUILDINGS[id]; return new THREE.Vector3(b.doorX, 0, b.rect[3] + 1.4); }
 function doorIn(id) { const b = BUILDINGS[id]; return new THREE.Vector3(b.doorX, 0, b.rect[3] - 1.2); }
 
-function makePath(from, to) {
+const V3 = (x, z) => new THREE.Vector3(x, 0, z);
+// Punto de aproximación exterior por edificio (evita cruzar fachadas)
+const APPROACH = { llama: V3(0, 35.5), super: V3(0, -25), centro: V3(27, 2), home: V3(-26, -2.5) };
+// Pasos intermedios para llegar a un punto sin atravesar muebles
+const SPOT_VIA = {
+  super_checkout: [V3(-0.5, -31.2)],
+  super_aisle: [V3(3.4, -30.5)],
+  office_ren: [V3(31.6, -5.5), V3(31.6, -9.4)],
+  office_valeria: [V3(31.6, -5.5), V3(36.9, -6.4), V3(36.9, -11)],
+  llama_kitchen: [V3(8, 32.8), V3(16.2, 32.8), V3(16.2, 25.2)],
+  llama_table: [V3(8, 32.8), V3(14.2, 32.8)],
+  lucia_garden: [V3(-34, 0.8), V3(-39.5, 0.8)],
+  lucia_porch: [V3(-34, 0.8), V3(-39.5, 0.8)],
+  home_in: [V3(-26, -7)],
+};
+
+function avoidFountain(pts) {
+  // si un tramo pasa cerca de la fuente (r≈4), se rodea por un anillo de radio 6.8
+  for (let k = 0; k < 3; k++) {
+    let changed = false;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      const dx = b.x - a.x, dz = b.z - a.z, L2 = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, -(a.x * dx + a.z * dz) / L2));
+      const cx = a.x + dx * t, cz = a.z + dz * t;
+      if (Math.hypot(cx, cz) < 4.6) {
+        let ang = Math.atan2(cz, cx);
+        if (Math.hypot(cx, cz) < 0.01) ang = Math.atan2(-dx, dz);
+        pts.splice(i + 1, 0, new THREE.Vector3(Math.cos(ang) * 6.8, 0, Math.sin(ang) * 6.8));
+        changed = true; break;
+      }
+    }
+    if (!changed) break;
+  }
+  return pts;
+}
+
+function makePath(from, to, prevSpot, nextSpot) {
   const pts = [];
   const bf = buildingAt(from), bt = buildingAt(to);
-  if (bf && bf !== bt) { pts.push(doorIn(bf), doorOut(bf)); }
-  const zf = zoneAt(from.x, from.z), zt = zoneAt(to.x, to.z);
+  const viaPrev = (SPOT_VIA[prevSpot] || []).slice().reverse();
+  const viaNext = SPOT_VIA[nextSpot] || [];
+  if (bf && bf !== bt) { pts.push(...viaPrev, doorIn(bf), doorOut(bf)); if (APPROACH[bf]) pts.push(APPROACH[bf].clone()); }
+  else if (!bf && prevSpot !== nextSpot) pts.push(...viaPrev);
+  const outFrom = bf && bf !== bt ? (APPROACH[bf] || doorOut(bf)) : from;
+  const outTo = bt && bt !== bf ? (APPROACH[bt] || doorOut(bt)) : to;
+  const zf = zoneAt(outFrom.x, outFrom.z), zt = zoneAt(outTo.x, outTo.z);
   const inPlaza = (v) => Math.abs(v.x) < 14.5 && Math.abs(v.z) < 14.5;
-  const zoneKey = (v, z) => (inPlaza(v) ? 'plaza' : z);
-  const kf = zoneKey(bf ? doorOut(bf) : from, zf), kt = zoneKey(bt ? doorOut(bt) : to, zt);
+  const kf = inPlaza(outFrom) ? 'plaza' : zf, kt = inPlaza(outTo) ? 'plaza' : zt;
   if (kf !== kt) {
     if (kf !== 'plaza') pts.push(GATE_PT[kf].clone());
-    // rodear la fuente por un anillo de radio 6.5
-    const a0 = kf === 'plaza' ? Math.atan2((bf ? doorOut(bf) : from).z, (bf ? doorOut(bf) : from).x) : RING_ANG[kf];
-    const a1 = kt === 'plaza' ? Math.atan2((bt ? doorOut(bt) : to).z, (bt ? doorOut(bt) : to).x) : RING_ANG[kt];
+    const a0 = kf === 'plaza' ? Math.atan2(outFrom.z, outFrom.x) : RING_ANG[kf];
+    const a1 = kt === 'plaza' ? Math.atan2(outTo.z, outTo.x) : RING_ANG[kt];
     let d = a1 - a0; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
     const steps = Math.max(1, Math.ceil(Math.abs(d) / (Math.PI / 4)));
     for (let i = 0; i <= steps; i++) { const a = a0 + (d * i) / steps; pts.push(new THREE.Vector3(Math.cos(a) * 6.8, 0, Math.sin(a) * 6.8)); }
     if (kt !== 'plaza') pts.push(GATE_PT[kt].clone());
   }
-  if (bt && bt !== bf) { pts.push(doorOut(bt), doorIn(bt)); }
+  if (bt && bt !== bf) { if (APPROACH[bt]) pts.push(APPROACH[bt].clone()); pts.push(doorOut(bt), doorIn(bt)); }
+  pts.push(...viaNext.map((v) => v.clone()));
   pts.push(to.clone());
-  return pts;
+  return avoidFountain([from.clone(), ...pts]).slice(1);
 }
 
 function iconTexture(text, bg) {
@@ -96,7 +137,7 @@ export class NPC {
       this.ch.root.position.copy(this.pos);
       this.heading = 0;
     } else {
-      this.path = makePath(this.pos, target);
+      this.path = makePath(this.pos, target, prev, spot);
     }
     this.home = target.clone();
   }
