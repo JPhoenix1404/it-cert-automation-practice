@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Barrio Fénix</title>
+  <meta name="description" content="Simulador de vida acogedor con estética anime. Para iPad, sin conexión.">
+  <meta name="theme-color" content="#ff7a45">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Barrio Fénix">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div id="touch-area"></div>
+  <div id="joy-base"><div id="joy-knob"></div></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="bar">
+      <div class="clock"><span id="hud-phase-icon">☀️</span><div><b id="hud-clock">--:--</b><small id="hud-phase"></small></div></div>
+      <div class="energy"><span>⚡</span><div class="ebar"><div id="hud-energy-fill"></div></div><b id="hud-energy-val">100</b></div>
+      <div class="money"><span class="coin d">D</span><b id="hud-deuros">0</b></div>
+      <div class="money"><span class="coin f">🔥</span><b id="hud-fenix">0</b></div>
+      <button id="menu-btn" aria-label="Menú">☰</button>
+    </div>
+    <div id="quest-tracker"></div>
+  </div>
+  <button id="action-btn" class="hidden"><span id="action-icon">✋</span><span id="action-label"></span></button>
+  <div id="edge-arrow">➤</div>
+  <div id="toasts"></div>
+
+  <!-- Diálogo -->
+  <div id="dialog">
+    <div id="dlg-portrait"></div>
+    <div class="dlg-box">
+      <div id="dlg-name"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-choices"></div>
+      <div id="dlg-next">▼</div>
+    </div>
+  </div>
+
+  <!-- Panel modal -->
+  <div id="panel"><div class="panel-in"><div class="panel-head"><h2 id="panel-title"></h2><button id="panel-close" aria-label="Cerrar">✕</button></div><div id="panel-body"></div></div></div>
+
+  <!-- Minijuegos -->
+  <div id="mg">
+    <canvas id="mg-canvas"></canvas>
+    <div class="mg-hud"><div id="mg-title"></div><div class="mg-timer"><div id="mg-timer-fill"></div></div><div id="mg-score"></div></div>
+    <div id="mg-intro" class="mg-card"><div id="mg-intro-icon" class="big"></div><h2 id="mg-intro-title"></h2><p id="mg-intro-text"></p><button id="mg-start" class="cta">¡Empezar!</button></div>
+    <div id="mg-count"></div>
+    <div id="mg-result" class="mg-card"><div id="mg-grade" class="grade">S</div><h2 id="mg-result-sub"></h2><p id="mg-result-text"></p><button id="mg-continue" class="cta">Continuar</button></div>
+  </div>
+
+  <div id="fade"><div id="fade-text"></div></div>
+
+  <!-- Título -->
+  <div id="title">
+    <div class="logo"><div class="flame">🔥</div><h1>Barrio <span>Fénix</span></h1><p>Una vida nueva te espera</p></div>
+    <div class="tbtns"><button id="btn-continue" class="cta">Continuar</button><button id="btn-new" class="cta alt">Nueva partida</button></div>
+    <div class="tfoot">Para la mejor experiencia: en Safari, <b>Compartir → Añadir a pantalla de inicio</b>. Funciona sin conexión.</div>
+  </div>
+  <div id="agegate"><div class="card-c"><div class="big">🔞</div><h2>Contenido para mayores de 18 años</h2><p>Barrio Fénix incluye temas adultos: romance, coqueteo, alcohol, infidelidad, ropa atrevida y escenas sugeridas (sin contenido explícito).</p><p><b>¿Eres mayor de 18 años?</b></p><div class="tbtns"><button id="age-yes" class="cta">Sí, soy mayor de edad</button><button id="age-no" class="cta alt">No</button></div><p id="age-msg" class="warn"></p></div></div>
+  <div id="creator"><div class="cpanel"><h2>Crea tu personaje</h2><div id="creator-body"></div><button id="btn-create" class="cta">Empezar mi nueva vida</button></div></div>
+  <div id="loading" class="show"><div class="flame">🔥</div><div>Cargando Barrio Fénix...</div></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
