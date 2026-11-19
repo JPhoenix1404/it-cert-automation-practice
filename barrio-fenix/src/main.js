@@ -66,7 +66,27 @@ function makePortrait(look, isCat = false) {
   rt.dispose(); ch.dispose();
   return c.toDataURL('image/png');
 }
-G.portrait = (id) => (id === 'player' ? makePortrait(resolveLook(G.state.player)) : makePortrait(G.npcs ? G.npcs.get(id).look() : { ...CHARACTERS[id].look, gender: CHARACTERS[id].gender }, !!CHARACTERS[id].isCat));
+// Retrato a partir de un personaje ya cargado (p. ej. un VRM)
+function portraitFromRig(ch) {
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a8a, 1.3));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(1, 2, 3); scene.add(dl);
+  const root = ch.root, parent = root.parent, pos = root.position.clone(), rot = root.rotation.y, vis = root.visible;
+  scene.add(root); root.position.set(0, 0, 0); root.rotation.y = 0; root.visible = true; root.updateMatrixWorld(true);
+  const head = ch.vrm.humanoid.getNormalizedBoneNode('head');
+  const hp = new THREE.Vector3(); head.getWorldPosition(hp);
+  const cam = new THREE.OrthographicCamera(-0.42, 0.42, 0.42, -0.42, 0.1, 20);
+  cam.position.set(0.18, hp.y + 0.02, 4); cam.lookAt(0, hp.y - 0.06, 0);
+  const S = 256, rt = new THREE.WebGLRenderTarget(S, S, { samples: 4 }); rt.texture.colorSpace = THREE.SRGBColorSpace;
+  renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(scene, cam);
+  const px = new Uint8Array(S * S * 4); renderer.readRenderTargetPixels(rt, 0, 0, S, S, px); renderer.setRenderTarget(null);
+  const c = document.createElement('canvas'); c.width = c.height = S; const ctx = c.getContext('2d'); const img = ctx.createImageData(S, S);
+  for (let y = 0; y < S; y++) img.data.set(px.subarray((S - 1 - y) * S * 4, (S - y) * S * 4), y * S * 4);
+  ctx.putImageData(img, 0, 0); rt.dispose();
+  parent.add(root); root.position.copy(pos); root.rotation.y = rot; root.visible = vis;
+  return c.toDataURL('image/png');
+}
+G.portrait = (id) => (id === 'player' ? makePortrait(resolveLook(G.state.player)) : G.npcs?.get(id)?.hasVRM ? portraitFromRig(G.npcs.get(id).ch) : makePortrait(G.npcs ? G.npcs.get(id).look() : { ...CHARACTERS[id].look, gender: CHARACTERS[id].gender }, !!CHARACTERS[id].isCat));
 
 // ---------------- Título y creador ----------------
 const SKINS = ['#f6dcc6', '#f1d2b6', '#e2b48e', '#c98f6a', '#9a6a4a', '#6a4430'];
@@ -166,6 +186,7 @@ function startGame() {
   if (G.state.quests.X1?.status === 'active') G.world.feathers.forEach((f, i) => (f.visible = !G.state.feathers[i]));
   interactables = buildInteractables();
   // retratos
+  G.ui.refreshPortrait = (id) => { const n = G.npcs.get(id); if (n?.hasVRM) G.ui.portraits[id] = portraitFromRig(n.ch); };
   G.ui.portraits.player = G.portrait('player');
   for (const id of CHAR_ORDER) G.ui.portraits[id] = G.portrait(id);
   // marcador de misión

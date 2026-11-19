@@ -6,6 +6,7 @@ import { buildCharacter } from './character.js';
 import { SPOTS, BUILDINGS, zoneAt } from './world.js';
 import { hourFloat, inHours } from './time.js';
 import { canvasTexture } from './toon.js';
+import { VRM_MODELS, loadVRMCharacter } from './vrm.js';
 
 const GATE_PT = { casa: new THREE.Vector3(-16, 0, 0), super: new THREE.Vector3(0, 0, -16), trabajo: new THREE.Vector3(16, 0, 0), restaurante: new THREE.Vector3(0, 0, 16) };
 const RING_ANG = { casa: Math.PI, super: -Math.PI / 2, trabajo: 0, restaurante: Math.PI / 2 };
@@ -105,6 +106,17 @@ export class NPC {
     this.indicator = new THREE.Sprite(icon('quest')); this.indicator.scale.set(0.8, 0.8, 1); this.indicator.renderOrder = 10; this.indicator.visible = false;
     this.ch.root.add(this.indicator); this.indicator.position.y = this.def.isCat ? 1.05 : 2.75;
     this.place(true);
+    if (VRM_MODELS[id]) loadVRMCharacter(VRM_MODELS[id], { height: this.def.look.height || 1 }).then((ch) => this.useVRM(ch)).catch((e) => console.warn('VRM no disponible para', id, e));
+  }
+  useVRM(ch) {
+    const old = this.ch;
+    this.ch = ch; this.hasVRM = true;
+    this.scene.add(ch.root);
+    ch.root.add(this.indicator);
+    ch.root.position.copy(this.pos); ch.root.rotation.y = this.heading; ch.root.visible = old.root.visible;
+    this.scene.remove(old.root); old.dispose();
+    ch.update(0.016, 0);
+    G.ui?.refreshPortrait?.(this.id);
   }
   look() {
     const L = { ...this.def.look, gender: this.def.gender };
@@ -112,6 +124,7 @@ export class NPC {
     return L;
   }
   build() {
+    if (this.hasVRM) return;
     const old = this.ch;
     this.ch = buildCharacter(this.look());
     this.scene.add(this.ch.root);
