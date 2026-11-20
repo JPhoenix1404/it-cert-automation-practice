@@ -389,6 +389,17 @@ async function boot() {
 }
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW', e)));
+  // Al publicar una versión nueva: si aún estamos en el título, recargar solo; si no, avisar.
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
+    if (!G.state || document.getElementById('title').classList.contains('show')) { location.reload(); return; }
+    saveState();
+    const b = document.createElement('button');
+    b.className = 'update-btn'; b.textContent = '✨ Hay una versión nueva del juego · Toca para actualizar';
+    b.onclick = () => { saveState(); location.reload(); };
+    document.body.appendChild(b);
+  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch((e) => console.warn('SW', e)));
 }
 boot().catch((e) => { console.error(e); $('loading').innerHTML = `<div class="err">Error al iniciar: ${e.message}</div>`; });
