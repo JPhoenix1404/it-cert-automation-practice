@@ -16,6 +16,7 @@ import { buildInteractables, talkTo, openMenu, buildingOpen, dailyTick } from '.
 import { isNight, hourFloat } from './time.js';
 import { toon } from './toon.js';
 import { MiniMap, openFullMap } from './map.js';
+import { preloadEnv } from './env.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -73,9 +74,11 @@ function portraitFromRig(ch) {
   const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(1, 2, 3); scene.add(dl);
   const root = ch.root, parent = root.parent, pos = root.position.clone(), rot = root.rotation.y, vis = root.visible;
   scene.add(root); root.position.set(0, 0, 0); root.rotation.y = 0; root.visible = true; root.updateMatrixWorld(true);
-  const head = ch.vrm.humanoid.getNormalizedBoneNode('head');
-  const hp = new THREE.Vector3(); head.getWorldPosition(hp);
-  const cam = new THREE.OrthographicCamera(-0.42, 0.42, 0.42, -0.42, 0.1, 20);
+  const hp = new THREE.Vector3();
+  let half = 0.42;
+  if (ch.vrm) ch.vrm.humanoid.getNormalizedBoneNode('head').getWorldPosition(hp);
+  else { const bb = new THREE.Box3().setFromObject(root); hp.set(0, bb.max.y * 0.72, 0); half = (bb.max.y - bb.min.y) * 0.42; }
+  const cam = new THREE.OrthographicCamera(-half, half, half, -half, 0.1, 20);
   cam.position.set(0.18, hp.y + 0.02, 4); cam.lookAt(0, hp.y - 0.06, 0);
   const S = 256, rt = new THREE.WebGLRenderTarget(S, S, { samples: 4 }); rt.texture.colorSpace = THREE.SRGBColorSpace;
   renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(scene, cam);
@@ -173,7 +176,10 @@ async function creator() {
 let interactables = [], current = null, marker = null, edgeArrow = $('edge-arrow');
 let hudT = 0, hoursT = 0, saveT = 0, perfT = 0, perfFrames = 0, insideHome = false, lastMusic = null;
 
-function startGame() {
+async function startGame() {
+  $('loading').classList.add('show');
+  await preloadEnv();
+  $('loading').classList.remove('show');
   const scene = new THREE.Scene();
   G.scene = scene;
   G.world = new World(scene);
@@ -363,7 +369,7 @@ async function boot() {
     G.state = loadState();
     if (!G.state) { alert('No se pudo cargar la partida. Empezamos una nueva.'); return location.reload(); }
     $('title').classList.remove('show');
-    startGame();
+    await startGame();
     G.ui.toast(`¡Hola de nuevo, ${G.state.player.name}!`, '🔥');
     return;
   }
@@ -375,7 +381,7 @@ async function boot() {
   const p = await creator();
   G.state = newState(p);
   saveState();
-  startGame();
+  await startGame();
   await sleep(400);
   await G.ui.fade('Con dos maletas y muchas dudas, llegas a Barrio Fénix...', 1800);
   await G.ui.say([['narr', 'Nueva casa. Nuevo barrio. Nueva vida.'], ['narr', 'Busca al gato con bufanda que te mira desde la puerta. Parece que quiere decirte algo.']]);

@@ -7,6 +7,7 @@ import { SPOTS, BUILDINGS, zoneAt } from './world.js';
 import { hourFloat, inHours, isNight } from './time.js';
 import { canvasTexture } from './toon.js';
 import { findModel, loadVRMCharacter } from './vrm.js';
+import { ENV, loadCat } from './env.js';
 
 const GATE_PT = { casa: new THREE.Vector3(-16, 0, 0), super: new THREE.Vector3(0, 0, -16), trabajo: new THREE.Vector3(16, 0, 0), restaurante: new THREE.Vector3(0, 0, 16) };
 const RING_ANG = { casa: Math.PI, super: -Math.PI / 2, trabajo: 0, restaurante: Math.PI / 2 };
@@ -106,6 +107,7 @@ export class NPC {
     this.indicator = new THREE.Sprite(icon('quest')); this.indicator.scale.set(0.8, 0.8, 1); this.indicator.renderOrder = 10; this.indicator.visible = false;
     this.ch.root.add(this.indicator); this.indicator.position.y = this.def.isCat ? 1.05 : 2.75;
     this.place(true);
+    if (this.def.isCat && ENV.ready) loadCat().then((ch) => this.useCatModel(ch)).catch((e) => console.warn('Gato no disponible', e));
     if (this.def.isCat) findModel(id).then((url) => url && loadVRMCharacter(url, { height: 1 }).then((ch) => this.addHumanForm(ch))).catch((e) => console.warn('Forma humana no disponible', e));
     else findModel(id).then((url) => url && loadVRMCharacter(url, { height: this.def.look.height || 1 }).then((ch) => this.useVRM(ch))).catch((e) => console.warn('VRM no disponible para', id, e));
   }
@@ -118,6 +120,20 @@ export class NPC {
     this.scene.remove(old.root); old.dispose();
     ch.update(0.016, 0);
     G.ui?.refreshPortrait?.(this.id);
+  }
+  // Gato animado (modelo 3D) en lugar del gato procedural
+  useCatModel(ch) {
+    const old = this.catCh || this.ch;
+    this.scene.add(ch.root); ch.root.position.copy(this.pos); ch.root.rotation.y = this.heading;
+    const active = !this.humanCh || !this.humanForm;
+    if (this.humanCh) this.catCh = ch;
+    if (active) { ch.root.visible = old.root.visible; ch.root.add(this.indicator); this.indicator.position.y = 1.6; this.ch = ch; }
+    else ch.root.visible = false;
+    this.scene.remove(old.root); old.dispose();
+    ch.update(0.016, 0);
+    const pic = G.ui?.portraitOf ? G.ui.portraitOf(ch) : null;
+    this.catPortrait = pic || this.catPortrait;
+    if (active && pic && G.ui?.portraits) G.ui.portraits[this.id] = pic;
   }
   // Neko-san: gato de día, mujer gata de noche
   addHumanForm(ch) {
@@ -135,7 +151,7 @@ export class NPC {
     const from = this.ch, to = want ? this.humanCh : this.catCh;
     to.root.position.copy(this.pos); to.root.rotation.y = this.heading;
     to.root.visible = from.root.visible; from.root.visible = false;
-    to.root.add(this.indicator); this.indicator.position.y = to.isCat ? 1.05 : 2.75;
+    to.root.add(this.indicator); this.indicator.position.y = to.isGLB ? 1.6 : to.isCat ? 1.05 : 2.75;
     this.ch = to;
     if (G.ui?.portraits) { if (!this.catPortrait) this.catPortrait = G.ui.portraits[this.id]; G.ui.portraits[this.id] = want ? (this.humanPortrait || this.catPortrait) : this.catPortrait; }
     if (G.player && this.visible && this.pos.distanceTo(G.player.pos) < 20) G.ui?.toast(want ? 'Neko-san se transforma bajo las farolas...' : 'Neko-san vuelve a ser un gato.', '✨');
@@ -229,7 +245,7 @@ export class NPCManager {
     this.t += dt;
     for (const n of this.list) {
       n.update(dt, playerPos);
-      if (n.indicator.visible) n.indicator.position.y = (n.ch.isCat ? 1.05 : 2.75) + Math.sin(this.t * 3) * 0.08;
+      if (n.indicator.visible) n.indicator.position.y = (n.ch.isGLB ? 1.6 : n.ch.isCat ? 1.05 : 2.75) + Math.sin(this.t * 3) * 0.08;
     }
   }
   nearest(pos, maxD = 2.4) {

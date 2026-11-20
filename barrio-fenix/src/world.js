@@ -2,6 +2,7 @@
 import * as THREE from '../vendor/three.module.min.js';
 import { StaticBatch, toon, canvasTexture, OUTLINE_MAT } from './toon.js';
 import { mergeGeometries } from '../vendor/BufferGeometryUtils.js';
+import { ENV, KitBatch } from './env.js';
 import { G, clamp, lerp } from './game.js';
 import { skyAt, daylight, hourFloat } from './time.js';
 
@@ -74,6 +75,7 @@ export class World {
     this.glow = { lamps: toon('#ffe9a8', { emissive: '#ffcf6a', emissiveIntensity: 0, unique: true }), lanterns: toon('#ff7a4a', { emissive: '#ff5a2a', emissiveIntensity: 0, unique: true }), windows: toon('#9ad0ff', { emissive: '#ffc070', emissiveIntensity: 0, unique: true }) };
     this.strings = [];
     this.time = 0;
+    this.kitFront = 0; // orientación de la fachada de los modelos KayKit
     this.build();
   }
 
@@ -381,6 +383,7 @@ export class World {
     }
     this.cheap = false;
     this.scene.add(FB.build({ castShadow: false }));
+    if (ENV.ready) this.buildKitCity();
     // cables de los farolillos
     for (const pts of this.strings) B.geo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.025, 4), '#2a2226', 0, 0, 0, { outline: false });
     // charcos de luz bajo las farolas (una sola malla aditiva)
@@ -424,6 +427,30 @@ export class World {
     this.lanternMesh = ln.build({ material: toon('#ffffff', { vc: true, emissive: '#ff6a2a', emissiveIntensity: 0, unique: true }), castShadow: false });
     this.glow.lanterns = this.lanternMesh.userData.mesh.material;
     this.scene.add(this.lanternMesh);
+  }
+
+  // Ciudad de fondo con edificios KayKit alrededor de cada bioma
+  buildKitCity() {
+    const K = new KitBatch(), S = 5.5, names = ['building_A', 'building_B', 'building_C', 'building_D', 'building_E', 'building_F', 'building_G', 'building_H'];
+    let n = 0;
+    const row = (x1, z1, x2, z2, fx, fz) => {
+      const len = Math.hypot(x2 - x1, z2 - z1), steps = Math.max(1, Math.round(len / (2 * S + 0.6)));
+      for (let i = 0; i < steps; i++) {
+        const t = (i + 0.5) / steps;
+        K.add(names[(n++ * 3) % names.length], x1 + (x2 - x1) * t, 0, z1 + (z2 - z1) * t, Math.atan2(fx, fz) + this.kitFront, S);
+      }
+    };
+    const o = 7.5;
+    // sin filas en el lado sur (+z): quedarían entre la cámara y el jugador
+    row(-46 - o, -18, -46 - o, 12, 1, 0); row(-44, -18 - o, -22, -18 - o, 0, 1);
+    row(-20, -46 - o, 20, -46 - o, 0, 1); row(-20 - o, -44, -20 - o, -30, 1, 0); row(20 + o, -44, 20 + o, -30, -1, 0);
+    row(46 + o, -18, 46 + o, 12, -1, 0); row(22, -18 - o, 44, -18 - o, 0, 1);
+    row(-20 - o, 22, -20 - o, 38, 1, 0); row(20 + o, 22, 20 + o, 38, -1, 0);
+    // arbustos a lo largo de los setos y coches aparcados en el super
+    for (let x = -18; x <= 18; x += 4.5) if (Math.abs(x) > 5) K.add('bush', x, 0, -45.2, 0, 2.6);
+    K.add('car_taxi', -8, 0, -21.5, 0, 4.2).add('car_stationwagon', 2.5, 0, -21.5, Math.PI, 4.2).add('firehydrant', 21, 0, 5, 0, 3).add('trash_A', 19.5, 0, -5.5, 0, 3).add('dumpster', 12.5, 0, -40.5, 0, 3);
+    this.addBox(-8.9, -23.5, -7.1, -19.5); this.addBox(1.6, -23.5, 3.4, -19.5); this.addCircle(21, 5, 0.4); this.addCircle(19.5, -5.5, 0.5); this.addBox(11.3, -41.2, 13.7, -39.8);
+    K.build({ castShadow: true }).then((g) => this.scene.add(g));
   }
 
   // ---------- Edificios ----------
@@ -513,26 +540,50 @@ export class World {
         const glass = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.06), this.homeGlassMat);
         glass.position.set(wx, 1.9, -13.26); this.scene.add(glass);
       }
+      if (ENV.ready) {
+        // Muebles KayKit (CC0): mismas colisiones que la versión procedural
+        this.addBox(-22.45, -12.9, -20.2, -10.1);                 // cama
+        this.addBox(-28.3, -7.5, -26.9, -6.1);                    // mesa baja
+        this.addBox(-25.1, -7.7, -24.7, -5.9);                    // TV
+        this.addBox(-27.1, -11.2, -25.9, -10.0);                  // mesa comedor
+        this.addBox(-20.95, -7.0, -20.15, -5.4);                  // armario
+        box(0.4, 1.0, 1.8, '#2a2a30', -24.9, 0.5, -6.8, 0, false);
+        I.box(0.06, 0.9, 1.6, '#3a4a6a', -25.12, 1.3, -6.8, 0, { outline: false });
+        const K = new KitBatch()
+          .add('bed_double_A', -21.35, 0, -11.45, 0, 0.75)
+          .add('rug_rectangle_stripes_A', -27.4, 0.13, -7.3, 0, 0.9)
+          .add('table_low', -27.6, 0.13, -6.8, Math.PI / 2, 0.55)
+          .add('table_medium', -26.5, 0.13, -10.6, 0, 0.6)
+          .add('chair_A_wood', -27.45, 0.13, -10.6, Math.PI / 2, 0.75)
+          .add('chair_A_wood', -25.55, 0.13, -10.6, -Math.PI / 2, 0.75)
+          .add('cabinet_medium_decorated', -20.55, 0.13, -6.2, -Math.PI / 2, 0.78)
+          .add('shelf_B_large_decorated', -31.75, 1.5, -9.6, Math.PI / 2, 0.8)
+          .add('pictureframe_large_A', -27.5, 1.8, -13.25, 0, 0.6)
+          .add('pictureframe_medium', -21.4, 2.0, -13.25, 0, 0.6)
+          .add('lamp_table', -22.9, 0.13, -12.6, 0, 0.6);
+        K.build().then((g) => this.scene.add(g));
+      } else {
       // cama
-      box(2.0, 0.5, 3.0, '#8a6a4a', -21.3, 0.25, -11.5);
-      I.box(1.9, 0.25, 2.9, '#f6f2ee', -21.3, 0.6, -11.5, 0, { outline: false });
-      I.box(1.9, 0.2, 1.8, '#6a8acc', -21.3, 0.75, -11.0, 0, { outline: false });
-      I.box(1.2, 0.2, 0.5, '#ffffff', -21.3, 0.82, -12.6, 0, { outline: false });
-      // sofá + mesa + alfombra + TV
-      this.sofaGroup = new StaticBatch();
-      this.addBox(-30.3, -7.8, -29.3, -5.4);
-      for (const [fx, c] of [[-27.5, '#ffb7cc'], [-21.5, '#7ec8ff']]) { I.box(1.0, 0.75, 0.05, '#6a4a34', fx, 2.2, -13.3, 0, { outline: false }); I.box(0.85, 0.6, 0.06, c, fx, 2.2, -13.27, 0, { outline: false }); }
-      I.box(0.06, 0.5, 1.6, '#8a5a34', -31.8, 1.8, -9.5, 0, { outline: false }); for (let i = 0; i < 5; i++) I.box(0.25, 0.32, 0.12, ['#e8443a', '#4a8ad8', '#ffd34d', '#7ad07a', '#b07aff'][i], -31.65, 2.2, -10.1 + i * 0.28, 0, { outline: false });
-      I.box(4, 0.03, 3, '#e8d4a8', -27.2, 0.14, -7.4, 0, { outline: false });
-      box(0.9, 0.4, 1.4, '#a07a4a', -27.6, 0.2, -6.8);
-      box(0.4, 1.0, 1.8, '#2a2a30', -24.9, 0.5, -6.8);
-      I.box(0.06, 0.9, 1.6, '#3a4a6a', -25.12, 1.3, -6.8, 0, { outline: false });
-      // mesa y sillas
-      box(1.4, 0.75, 1.0, '#a8805a', -26.5, 0.38, -10.6);
-      for (const sx of [-0.9, 0.9]) I.box(0.5, 0.45, 0.5, '#8a6a4a', -26.5 + sx, 0.23, -10.6, 0);
-      // armario + espejo
-      box(0.7, 2.2, 1.6, '#e8d8c0', -20.6, 1.1, -6.2);
-      I.box(0.05, 1.6, 0.7, '#cfe8ff', -20.98, 1.3, -6.2, 0, { outline: false });
+        box(2.0, 0.5, 3.0, '#8a6a4a', -21.3, 0.25, -11.5);
+        I.box(1.9, 0.25, 2.9, '#f6f2ee', -21.3, 0.6, -11.5, 0, { outline: false });
+        I.box(1.9, 0.2, 1.8, '#6a8acc', -21.3, 0.75, -11.0, 0, { outline: false });
+        I.box(1.2, 0.2, 0.5, '#ffffff', -21.3, 0.82, -12.6, 0, { outline: false });
+        // sofá + mesa + alfombra + TV
+        this.sofaGroup = new StaticBatch();
+        this.addBox(-30.3, -7.8, -29.3, -5.4);
+        for (const [fx, c] of [[-27.5, '#ffb7cc'], [-21.5, '#7ec8ff']]) { I.box(1.0, 0.75, 0.05, '#6a4a34', fx, 2.2, -13.3, 0, { outline: false }); I.box(0.85, 0.6, 0.06, c, fx, 2.2, -13.27, 0, { outline: false }); }
+        I.box(0.06, 0.5, 1.6, '#8a5a34', -31.8, 1.8, -9.5, 0, { outline: false }); for (let i = 0; i < 5; i++) I.box(0.25, 0.32, 0.12, ['#e8443a', '#4a8ad8', '#ffd34d', '#7ad07a', '#b07aff'][i], -31.65, 2.2, -10.1 + i * 0.28, 0, { outline: false });
+        I.box(4, 0.03, 3, '#e8d4a8', -27.2, 0.14, -7.4, 0, { outline: false });
+        box(0.9, 0.4, 1.4, '#a07a4a', -27.6, 0.2, -6.8);
+        box(0.4, 1.0, 1.8, '#2a2a30', -24.9, 0.5, -6.8);
+        I.box(0.06, 0.9, 1.6, '#3a4a6a', -25.12, 1.3, -6.8, 0, { outline: false });
+        // mesa y sillas
+        box(1.4, 0.75, 1.0, '#a8805a', -26.5, 0.38, -10.6);
+        for (const sx of [-0.9, 0.9]) I.box(0.5, 0.45, 0.5, '#8a6a4a', -26.5 + sx, 0.23, -10.6, 0);
+        // armario + espejo
+        box(0.7, 2.2, 1.6, '#e8d8c0', -20.6, 1.1, -6.2);
+        I.box(0.05, 1.6, 0.7, '#cfe8ff', -20.98, 1.3, -6.2, 0, { outline: false });
+      }
       // cubo de fregar
       I.geo(new THREE.CylinderGeometry(0.3, 0.25, 0.5, 10), '#3a8ad8', -23.6, 0.25, -5.4);
       I.geo(new THREE.CylinderGeometry(0.03, 0.03, 1.6, 5), '#c8a070', -23.3, 0.85, -5.4, { rz: 0.25, outline: false });
@@ -709,13 +760,20 @@ export class World {
     if (this.homeExtras) {
       this.homeExtras.clear();
       const B = new StaticBatch();
-      if (state.upgrades.plantas) for (const [x, z] of [[-31.4, -5.2], [-20.9, -8.4], [-26.4, -12.9]]) { B.geo(new THREE.CylinderGeometry(0.25, 0.2, 0.45, 8), '#d8a070', x, 0.23, z); B.geo(new THREE.IcosahedronGeometry(0.42, 1), '#4caa54', x, 0.8, z); }
-      if (state.upgrades.lampara) { B.geo(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6), '#3a3a40', -31.3, 0.75, -8.4); B.geo(new THREE.ConeGeometry(0.35, 0.4, 10, 1, true), '#ffe0a0', -31.3, 1.6, -8.4); }
-      if (state.upgrades.sofa) { B.box(1.05, 0.55, 2.5, '#5a7ac8', -29.8, 0.28, -6.6, 0); B.box(0.32, 0.95, 2.5, '#4a6ab8', -30.25, 0.62, -6.6, 0); B.box(0.5, 0.3, 0.5, '#ffd34d', -29.6, 0.7, -5.8, 0.3); }
+      if (!ENV.ready && state.upgrades.plantas) for (const [x, z] of [[-31.4, -5.2], [-20.9, -8.4], [-26.4, -12.9]]) { B.geo(new THREE.CylinderGeometry(0.25, 0.2, 0.45, 8), '#d8a070', x, 0.23, z); B.geo(new THREE.IcosahedronGeometry(0.42, 1), '#4caa54', x, 0.8, z); }
+      if (!ENV.ready && state.upgrades.lampara) { B.geo(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6), '#3a3a40', -31.3, 0.75, -8.4); B.geo(new THREE.ConeGeometry(0.35, 0.4, 10, 1, true), '#ffe0a0', -31.3, 1.6, -8.4); }
+      if (ENV.ready) { /* sofá y mejoras con modelos KayKit (más abajo) */ } else if (state.upgrades.sofa) { B.box(1.05, 0.55, 2.5, '#5a7ac8', -29.8, 0.28, -6.6, 0); B.box(0.32, 0.95, 2.5, '#4a6ab8', -30.25, 0.62, -6.6, 0); B.box(0.5, 0.3, 0.5, '#ffd34d', -29.6, 0.7, -5.8, 0.3); }
       else { B.box(1.0, 0.5, 2.4, '#c8705a', -29.8, 0.25, -6.6, 0); B.box(0.3, 0.9, 2.4, '#b8604a', -30.25, 0.6, -6.6, 0); }
       if (!dirt.floor) { /* suelo brillante: sin manchas */ } else for (const [x, z, s] of [[-27, -9, 0.5], [-24.2, -11, 0.4], [-28.8, -10.8, 0.35], [-22.5, -7.6, 0.45]]) B.geo(new THREE.CylinderGeometry(s, s, 0.02, 12), '#7a6040', x, 0.13, z, { outline: false });
       const g = B.build({ castShadow: false });
       this.homeExtras.add(g);
+      if (ENV.ready) {
+        const K = new KitBatch().add(state.upgrades.sofa ? 'couch_pillows' : 'couch', -29.8, 0.13, -6.6, Math.PI / 2, 0.8);
+        if (state.upgrades.plantas) K.add('cactus_medium_A', -31.4, 0.13, -5.2, 0, 0.6).add('cactus_small_B', -20.9, 0.13, -8.4, 0, 0.6).add('cactus_medium_A', -26.4, 0.13, -12.9, 0, 0.6);
+        if (state.upgrades.lampara) K.add('lamp_standing', -31.3, 0.13, -8.4, 0, 0.7);
+        const token = (this.extrasToken = (this.extrasToken || 0) + 1);
+        K.build().then((kg) => { if (token === this.extrasToken) this.homeExtras.add(kg); });
+      }
       if (state.upgrades.lampara) { if (!this.homeLamp) { this.homeLamp = new THREE.PointLight(0xffc880, 0, 7, 1.5); this.homeLamp.position.set(-31.3, 1.7, -8.4); this.scene.add(this.homeLamp); } }
     }
   }

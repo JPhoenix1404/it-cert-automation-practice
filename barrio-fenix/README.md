@@ -37,3 +37,9 @@ Controles de teclado: WASD o flechas para moverte, E o Espacio para interactuar,
 | `tools/build-sw.mjs` | Regenera `sw.js` (lista de archivos para jugar sin conexión) |
 
 **Si cambias cualquier archivo**, ejecuta `node tools/build-sw.mjs` para que el iPad descargue la versión nueva.
+
+## Créditos de recursos
+- Edificios, mobiliario urbano y muebles: **KayKit** de Kay Lousberg (www.kaylousberg.com), licencia CC0.
+- Gato animado de Neko-san: **Vuena**, «Free Low-Poly Animals», licencia CC0.
+- Personajes 3D: creados con VRoid Studio.
+- Motor: three.js y @pixiv/three-vrm (MIT).
