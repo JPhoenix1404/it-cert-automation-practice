@@ -400,12 +400,19 @@ function openBoard() {
 }
 
 // ================== CONVERSACIONES ==================
+// Personaje con la "voz" correcta (Neko-san habla distinto en su forma humana nocturna)
+function voice(id) {
+  const c = CHARACTERS[id];
+  if (id === 'neko' && G.npcs.get('neko')?.humanForm && c.night) return { ...c, ...c.night, greetFriend: null, greetLove: null, greetNight: null, topicsClose: null };
+  return c;
+}
 export async function talkTo(npc) {
   const id = npc.id, c = CHARACTERS[id], r = rel(id);
   npc.talkLock = true; G.player.faceTowards(npc.pos);
   try {
     if (r.state === 'desconocido') { r.state = 'conocido'; }
     questEvent('talk', { npc: id });
+    if (id === 'neko' && npc.humanForm && !G.state.flags.nekoReveal) { G.state.flags.nekoReveal = true; await ui().say(CHARACTERS.neko.night.reveal); }
     // ¿boda pendiente?
     if (G.state.engaged === id && r.weddingDay != null && dayIndex() >= r.weddingDay) { await weddingFlow(id); return; }
     // misiones disponibles
@@ -430,7 +437,7 @@ async function secretQuest(id, qid) {
 }
 
 async function talkMenu(npc) {
-  const id = npc.id, c = CHARACTERS[id], r = rel(id), d = dayIndex();
+  const id = npc.id, c = voice(id), r = rel(id), d = dayIndex();
   const romantic = ['pareja', 'prometidos', 'casados'].includes(r.state);
   let pool = romantic && c.greetLove ? c.greetLove : hearts(id) >= 3 && c.greetFriend ? c.greetFriend : c.greet;
   if (isNight() && c.greetNight && Math.random() < 0.5) pool = c.greetNight;
@@ -513,7 +520,7 @@ async function interviewFlow() {
 
 // ---- Charla diaria ----
 async function chat(id) {
-  const c = CHARACTERS[id], r = rel(id), d = dayIndex();
+  const c = voice(id), r = rel(id), d = dayIndex();
   const npc = G.npcs.get(id);
   r.lastTalkDay = d; r.talks++;
   // Aiko: pregunta de memoria
@@ -568,7 +575,7 @@ async function chat(id) {
 
 // ---- Regalos ----
 async function giftFlow(id) {
-  const c = CHARACTERS[id], r = rel(id);
+  const c = voice(id), r = rel(id);
   const ids = Object.keys(G.state.inventory).filter((k) => G.state.inventory[k] > 0 && itemInfo(k).kind !== 'key');
   const opts = ids.map((k) => ({ label: `${itemInfo(k).icon} ${itemInfo(k).name}`, sub: `x${G.state.inventory[k]}`, id: k }));
   const i = await ui().choose('narr', `¿Qué le regalas a ${c.short}?`, opts, { cancel: 'Nada' });

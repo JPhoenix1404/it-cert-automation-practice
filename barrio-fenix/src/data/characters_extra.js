@@ -127,5 +127,29 @@ export const EXTRA = {
     ],
     gift: { love: '¡PESCADO! Eres mi human{o} favorit{o}. No se lo digas a Lucía.', like: 'Acepto tu ofrenda, human{o}.', neutral: '*Lo huele y se va.*', hate: '*Te mira con desprecio absoluto.*' },
     bye: ['Miau. (Adiós.)', 'Vete. Voy a dormir otras dieciséis horas.'],
+    // Forma humana (de noche, 20:00–07:00)
+    night: {
+      reveal: [
+        ['narr', 'Bajo la luz de las farolas, el gato naranja se estira... y sigue estirándose. Una silueta se levanta donde antes había un gato.'],
+        ['neko', '¿Qué miras así, human{o}? ¿Nunca habías visto a un gato con buenas piernas?', 'happy'],
+        ['you', '¿¡Neko-san!?'],
+        ['neko', 'La misma. Bufanda incluida. De noche el fénix me presta esta forma. De día vuelvo a los bigotes y a las dieciséis horas de siesta.'],
+        ['neko', 'Ni una palabra a Lucía. Si se entera de que el gato al que da jamón a escondidas soy yo... me quedo sin jamón.', 'blush'],
+      ],
+      greet: ['Buenas noches, human{o}. ¿Paseamos? Yo voy delante. Siempre.', 'Prrr... A estas horas el barrio es nuestro.', 'Shh. Escucha. ¿Oyes eso? Es la noche ronroneando.', 'Llegas justo cuando me apetecía compañía. No te acostumbres.'],
+      topics: [
+        { line: 'Con estas manos no puedo cazar ratones, pero puedo abrir latas de atún. La evolución es maravillosa.', opts: [['gracioso', '¿Cuántas latas llevas esta noche?'], ['sincero', '¿Echas de menos tu forma de gato?'], ['atrevido', 'Las manos te quedan muy bien, la verdad.']] },
+        { line: 'Cuando era solo un gato veía a la gente llegar y marcharse del barrio. Tú eres la primera persona que me ha hablado como si fuera alguien.', opts: [['sincero', 'Es que eres alguien, Neko-san.'], ['dulce', 'Gracias por esperarme todas esas noches.'], ['gracioso', 'Bueno, también eras el único que me hablaba a mí.']] },
+        { line: 'El fénix me dio esta forma para cuidar del barrio de noche. Creo que también lo hizo para que no me aburriera.', opts: [['sincero', '¿De qué tienes que cuidar al barrio?'], ['gracioso', '¿Y te deja horas extra?'], ['seguro', 'Entonces cuidaremos el barrio juntos.']] },
+        { line: 'Sigo durmiendo en cajas de cartón. Es más fuerte que yo. Tú no lo entenderías.', opts: [['gracioso', 'Te guardaré la caja de la próxima compra.'], ['dulce', 'Te entiendo perfectamente. Las cajas son acogedoras.'], ['atrevido', 'Mi cama es más cómoda que una caja. Solo digo.']] },
+        { line: 'Ronroneo cuando estoy a gusto. Incluso en esta forma. Si lo oyes, haz como que no.', opts: [['dulce', 'Ahora mismo te estoy oyendo...'], ['gracioso', 'No oigo nada. ¿Es un motor?'], ['sincero', 'Me alegra que estés a gusto conmigo.']] },
+      ],
+      react: {
+        love: ['Prrrr... Vale, me has ganado. Por esta noche.', 'Esa respuesta merece una lata de atún. Pagas tú.', 'Me gusta cómo hueles a barrio. A casa.'],
+        neutral: ['Hm. Interesante, human{o}.', 'Mmm. Puede.', '*Mueve la cola, pensativa.*'],
+        hate: ['Fsss. Cuidado, que esta forma también tiene uñas.', '*Te da la espalda con mucha dignidad.*', 'Eso ha sido muy poco felino por tu parte.'],
+      },
+      bye: ['Buenas noches. Si sueñas con gatos, soy yo.', 'Me voy de ronda. Cierra la ventana... o no.'],
+    },
   },
 };

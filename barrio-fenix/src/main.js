@@ -186,6 +186,7 @@ function startGame() {
   if (G.state.quests.X1?.status === 'active') G.world.feathers.forEach((f, i) => (f.visible = !G.state.feathers[i]));
   interactables = buildInteractables();
   // retratos
+  G.ui.portraitOf = (ch) => portraitFromRig(ch);
   G.ui.refreshPortrait = (id) => { const n = G.npcs.get(id); if (n?.hasVRM) G.ui.portraits[id] = portraitFromRig(n.ch); };
   G.ui.portraits.player = G.portrait('player');
   for (const id of CHAR_ORDER) G.ui.portraits[id] = G.portrait(id);
