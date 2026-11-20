@@ -130,7 +130,7 @@ Te mudas a **Barrio Fénix**, un barrio pequeño con cerezos, farolillos y vecin
 | **Ren Kurogane** (28) | Estrella. Tu rival en la oficina, orgulloso, tipo tsundere | Trabajo | 08:00–20:00 en la oficina; de 20:00 a 23:00 en la plaza | Sí | Seguro, Gracioso / Dulce | **Rivalidad:** ganarle en un turno da +6; perder da −2 |
 | **Kaito Aoyama** (26) | Estrella. Ex-idol del grupo ficticio STARLINE, escondido en el barrio | Supermercado | 10:00–19:00 en el super o la plaza; de noche, junto a la fuente | Sí | Gracioso, Dulce / Atrevido en público | **Incógnito:** si mencionas su pasado (opción "¿No eras de STARLINE?"), −8 |
 | **Sensei Goro** (68) | Estrella. Antiguo maestro de artes marciales, ahora jardinero | Casa | 06:00–19:00 en el jardín de la plaza | No | Sincero / Atrevido | **El camino de la escoba:** misiones de limpieza perfecta |
-| **Neko-san** | Estrella. Gato parlante que solo tú entiendes. Hace de guía | Casa | Siempre, cerca de tu casa | No | Gracioso / — | Tutorial y misión secreta |
+| **Neko-san** | Estrella. Gato parlante que solo tú entiendes; de noche (20:00–07:00) se transforma en mujer gata (modelo VRoid). Hace de guía | Casa | Siempre, cerca de tu casa | Sí, solo en su forma humana (de noche) | Gracioso / — | Tutorial y misión secreta |
 
 **Regalos (adora / le gusta / odia):**
 

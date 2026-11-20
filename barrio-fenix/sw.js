@@ -1,5 +1,5 @@
 // Generado por tools/build-sw.mjs — no editar a mano.
-const VERSION = 'bf-b208e0580d';
+const VERSION = 'bf-01e1613fbc';
 const FILES = ["./","assets/characters/lucia.vrm","assets/characters/neko.vrm","assets/icons/icon-180.png","assets/icons/icon-192.png","assets/icons/icon-512.png","assets/music/casa.mp3","assets/music/menu.mp3","assets/music/noche.mp3","assets/music/restaurante.mp3","assets/music/super.mp3","assets/music/trabajo.mp3","css/style.css","index.html","manifest.webmanifest","src/audio.js","src/character.js","src/data/characters.js","src/data/characters_extra.js","src/data/items.js","src/data/quests.js","src/game.js","src/gameplay.js","src/input.js","src/main.js","src/map.js","src/minigames/base.js","src/minigames/games.js","src/npc.js","src/player.js","src/quests.js","src/relations.js","src/state.js","src/time.js","src/toon.js","src/ui.js","src/vrm.js","src/world.js","vendor/BufferGeometryUtils.js","vendor/GLTFLoader.js","vendor/THREE-VRM-LICENSE","vendor/three-vrm.module.min.js","vendor/three.module.min.js"];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });

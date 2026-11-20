@@ -308,7 +308,7 @@ export const CHARACTERS = {
   },
 
   neko: {
-    name: 'Neko-san', short: 'Neko-san', age: null, gender: 'x', romance: false, star: true, biome: 'casa', isCat: true,
+    name: 'Neko-san', short: 'Neko-san', age: null, gender: 'f', romance: true, nightRomance: true, star: true, biome: 'casa', isCat: true,
     role: 'Estrella · Gato guardián del barrio',
     bio: 'Un gato naranja con bufanda que habla. Solo tú pareces entenderle. Dice que es el guardián de Barrio Fénix.',
     mechanic: 'Guía del barrio. Conoce secretos... como el origen del Fénix.',

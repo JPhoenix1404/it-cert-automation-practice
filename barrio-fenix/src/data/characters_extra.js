@@ -150,6 +150,23 @@ export const EXTRA = {
         hate: ['Fsss. Cuidado, que esta forma también tiene uñas.', '*Te da la espalda con mucha dignidad.*', 'Eso ha sido muy poco felino por tu parte.'],
       },
       bye: ['Buenas noches. Si sueñas con gatos, soy yo.', 'Me voy de ronda. Cierra la ventana... o no.'],
+      greetLove: ['Ahí estás. Llevo toda la noche ronroneando sin motivo. Bueno, con un motivo.', 'Ven aquí. Las farolas están celosas.', 'Te he guardado sitio en el tejado. Las estrellas se ven mejor contigo.'],
+      gift: { love: '¡Pescado! Y ahora con manos para comérmelo con dignidad. Te adoro. Al pescado. Y a ti.', like: 'Lo acepto, human{o}. Con mucho gusto.', neutral: 'Mm. Gracias. Lo guardaré en mi caja.', hate: '¿Verduras? ¿A una gata? Fsss.' },
     },
+    // Romance (solo con su forma humana, de noche)
+    date: [
+      { line: 'Las citas de gatos son en los tejados. ¿Te atreves a subir?', opts: [['atrevido', 'Contigo subo a donde haga falta.'], ['gracioso', 'Si me caigo, caigo de pie como tú, ¿no?'], ['dulce', 'Solo si me das la mano.']] },
+      { line: 'Cuando amanezca volveré a ser un gato. ¿Te importa estar con alguien que es mitad bufanda, mitad bigotes?', opts: [['sincero', 'Me importas tú. Con bigotes o sin ellos.'], ['dulce', 'Por las mañanas te rascaré detrás de la oreja.'], ['seguro', 'Te quiero entera: de día y de noche.']] },
+      { line: 'Prrr... Me estoy acercando demasiado, ¿verdad? Los gatos no conocemos el espacio personal.', opts: [['atrevido', 'Acércate más. No pienso quejarme.'], ['gracioso', 'Me he dado cuenta cuando te has sentado encima de mí.'], ['sincero', 'Me gusta tenerte cerca.']] },
+    ],
+    askDate: { yes: '¿Una cita? Prrr... Sí. Pero esta noche elijo yo el tejado.', no: 'Aún no te has ganado mi ronroneo. Sigue intentándolo.' },
+    confess: { yes: 'Llevo esperando en tu puerta desde antes de que llegaras. Claro que sí, human{o}. Eres lo mejor que me ha traído el fénix.', no: 'Los gatos tardamos en confiar. Dame unas noches más.' },
+    propose: { yes: '¿Para siempre? ¿Las siete vidas? ...Sí. Todas contigo.', no: 'Es pronto. Ni siquiera he decidido en qué caja dormiré mañana.' },
+    sleepover: 'Me quedo. Pero me acurruco a tus pies. O en tu pecho. Ya veremos.',
+    morning: ['Miau. (Buenos días. Has dormido con un gato encima, por si te lo preguntabas.)', '*Un gato naranja te mira desde la almohada con cara de no haber roto nunca un plato.*', 'Miau. (Esta noche, más. Ahora, pescado.)'],
+    afterDate: ['Esta noche ha sido mejor que una caja nueva. Y eso es mucho decir.', 'Prrr... Mañana, mismo tejado, misma hora.'],
+    breakup: 'Vale. Los gatos sabemos irnos sin hacer ruido. Pero seguiré vigilando tu puerta.',
+    caught: '¿Con otra persona? ¿Delante de mis bigotes? Fsss. Hemos terminado.',
+    vows: 'Siete vidas tengo, y te prometo todas: las noches como mujer y las mañanas como gata. Sí, quiero.',
   },
 };

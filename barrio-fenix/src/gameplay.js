@@ -459,7 +459,9 @@ async function talkMenu(npc) {
     if (id === 'valeria' && G.state.interviewDone && !(G.state.job?.id === 'administrativo')) opts.push({ label: '💼 Pedir el puesto de administrativo', k: 'job', job: 'administrativo' });
     if (id === 'marina' && G.state.unlocked.restaurante && !(G.state.job?.id === 'cocina')) opts.push({ label: '🔪 Pedir trabajo en la cocina', k: 'job', job: 'cocina' });
     // romance
-    if (c.romance) {
+    if (c.romance && c.nightRomance && !npc.humanForm) {
+      if (prefMatches(id) && hearts(id) >= 3) opts.push({ label: '🌙 (El romance con Neko-san es de noche)', k: 'none', disabled: true, why: 'De 20:00 a 07:00 Neko-san tiene forma humana.' });
+    } else if (c.romance) {
       const block = romanceBlock(id), h = hearts(id), partner = currentPartner();
       if (['conocido', 'amistad', 'ex'].includes(r.state)) opts.push({ label: '🌹 Proponer una cita', k: 'ask', disabled: !!block || h < 5, why: block || `Necesitas 5 ♥ con ${c.short} (tienes ${h}).` });
       if (['citas', 'pareja', 'prometidos', 'casados'].includes(r.state)) opts.push({ label: r.lastDateDay === d ? '🌙 Quedar (ya habéis quedado hoy)' : '🌙 Quedar', k: 'date', disabled: r.lastDateDay === d || !!block, why: block || 'Ya habéis quedado hoy.' });
