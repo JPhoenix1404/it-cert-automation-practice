@@ -2,6 +2,7 @@
 import * as THREE from '../vendor/three.module.min.js';
 import { G, bus, clamp } from './game.js';
 import { buildCharacter } from './character.js';
+import { loadPlayerBase, customizeVRM, playerColors } from './vrm.js';
 import { CLOTHES } from './data/items.js';
 import { RECTS, zoneAt } from './world.js';
 
@@ -32,8 +33,20 @@ export class Player {
     this.pos.set(p[0], 0, p[1]);
     this.camTarget.copy(this.pos);
     this.lastZone = zoneAt(this.pos.x, this.pos.z);
+    // Modelo VRoid del jugador (si existe la base de su género)
+    loadPlayerBase(G.state.player.gender).then((ch) => { if (ch) this.useVRM(ch); });
+  }
+  useVRM(ch) {
+    customizeVRM(ch, playerColors(G.state.player, resolveLook(G.state.player)));
+    const old = this.ch;
+    this.vrmCh = ch; this.ch = ch;
+    this.scene.add(ch.root); ch.root.position.copy(this.pos); ch.root.rotation.y = this.heading;
+    this.scene.remove(old.root); old.dispose();
+    ch.update(0.016, 0);
+    if (G.ui?.portraitOf) G.ui.portraits.player = G.ui.portraitOf(ch);
   }
   rebuild() {
+    if (this.vrmCh) { customizeVRM(this.vrmCh, playerColors(G.state.player, resolveLook(G.state.player))); return; }
     const old = this.ch;
     this.ch = buildCharacter(resolveLook(G.state.player));
     this.scene.add(this.ch.root);

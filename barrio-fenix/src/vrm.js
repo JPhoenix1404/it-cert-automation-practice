@@ -67,6 +67,10 @@ export async function loadVRMCharacter(url, { height = 1 } = {}) {
   const box = new THREE.Box3().setFromObject(vrm.scene);
   const h = box.max.y - box.min.y || 1.6;
   vrm.scene.scale.setScalar((2.05 / h) * height);
+  // reiniciar la física de pelo y ropa con la nueva escala (si no, se dispara)
+  vrm.scene.updateMatrixWorld(true);
+  vrm.springBoneManager?.setInitState?.();
+  vrm.springBoneManager?.reset?.();
   return new VRMRig(root, vrm);
 }
 
@@ -139,3 +143,123 @@ class VRMRig {
   }
   dispose() { VRMUtils.deepDispose(this.vrm.scene); }
 }
+
+// ---------------- Personalización del jugador (bases VRoid) ----------------
+// Tiñe pelo, ojos, piel y ropa de un VRM. Las regiones de cada parte se obtienen
+// dibujando los triángulos de su material en una máscara (sirve para cualquier atlas).
+function rgb2hsl(r, g, b) {
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min, s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+function kindOf(name = '') {
+  if (/HAIR/i.test(name)) return 'hair';
+  if (/CLOTH/i.test(name)) return 'cloth';
+  if (/FaceMouth|EyeIris|_EYE\b/i.test(name) && !/Highlight/i.test(name)) return 'eye';
+  if (/SKIN/i.test(name)) return 'skin';
+  return null;
+}
+function prepare(ch) {
+  if (ch._custom) return ch._custom;
+  const info = { textures: new Map(), skinMats: [] };
+  ch.vrm.scene.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      const kind = kindOf(m.name);
+      if (kind === 'skin') { info.skinMats.push(m); continue; }
+      if (!kind || !m.map || !m.map.image) continue;
+      const img = m.map.image, key = m.map.uuid;
+      if (!info.textures.has(key)) {
+        const W = img.width, H = img.height;
+        const orig = document.createElement('canvas'); orig.width = W; orig.height = H;
+        orig.getContext('2d').drawImage(img, 0, 0);
+        const out = document.createElement('canvas'); out.width = W; out.height = H;
+        const tex = new THREE.CanvasTexture(out); tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace;
+        info.textures.set(key, { orig, out, tex, masks: {}, mats: new Set(), W, H, src: m.map });
+      }
+      const T = info.textures.get(key);
+      T.mats.add(m);
+      // máscara de la región de este material
+      const mask = T.masks[kind] || (T.masks[kind] = (() => { const c = document.createElement('canvas'); c.width = T.W; c.height = T.H; return c; })());
+      const mc = mask.getContext('2d'); mc.fillStyle = '#fff';
+      const uv = o.geometry.attributes.uv, idx = o.geometry.index;
+      if (!uv) continue;
+      const n = idx ? idx.count : uv.count;
+      mc.beginPath();
+      for (let i = 0; i < n; i += 3) {
+        for (let k = 0; k < 3; k++) {
+          const v = idx ? idx.getX(i + k) : i + k;
+          const x = uv.getX(v) * T.W, y = uv.getY(v) * T.H;
+          if (k === 0) mc.moveTo(x, y); else mc.lineTo(x, y);
+        }
+        mc.closePath();
+      }
+      mc.fill();
+    }
+  });
+  for (const m of info.skinMats) { m.userData.baseColor = m.color.clone(); if (m.shadeColorFactor) m.userData.baseShade = m.shadeColorFactor.clone(); }
+  ch._custom = info;
+  return info;
+}
+export function customizeVRM(ch, { hair, eyes, skin, clothes } = {}) {
+  const info = prepare(ch);
+  const C = { hair: hair && new THREE.Color(hair), eye: eyes && new THREE.Color(eyes), cloth: clothes && new THREE.Color(clothes) };
+  for (const T of info.textures.values()) {
+    const ctx = T.out.getContext('2d', { willReadFrequently: true });
+    if (!T.origData) T.origData = T.orig.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, T.W, T.H);
+    ctx.putImageData(T.origData, 0, 0);
+    const data = ctx.getImageData(0, 0, T.W, T.H), d = data.data;
+    for (const [kind, mask] of Object.entries(T.masks)) {
+      const col = C[kind]; if (!col) continue;
+      T.maskData = T.maskData || {};
+      const md = T.maskData[kind] || (T.maskData[kind] = mask.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, T.W, T.H).data);
+      // luminosidad máxima de la región para normalizar
+      let maxL = 0.01;
+      for (let i = 0; i < d.length; i += 4) if (md[i + 3] > 0 && d[i + 3] > 0) { const l = (d[i] + d[i + 1] + d[i + 2]) / 765; if (l > maxL) maxL = l; }
+      for (let i = 0; i < d.length; i += 4) {
+        if (md[i + 3] === 0 || d[i + 3] === 0) continue;
+        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+        if (kind === 'eye') {
+          const [h, s] = rgb2hsl(r, g, b);
+          if (s < 0.22 || h < 45 || h > 330) continue; // sólo el iris (no boca, pestañas ni blanco)
+        }
+        const l = Math.min(1, (r + g + b) / 3 / maxL);
+        const k = kind === 'eye' ? 0.25 + l * 1.1 : 0.22 + l * 0.98;
+        d[i] = Math.min(255, col.r * k * 255); d[i + 1] = Math.min(255, col.g * k * 255); d[i + 2] = Math.min(255, col.b * k * 255);
+      }
+    }
+    ctx.putImageData(data, 0, 0);
+    T.tex.needsUpdate = true;
+    // sustituir la textura en todos los materiales que usan este atlas
+    ch.vrm.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (m.map === T.src || m.map === T.tex) m.map = T.tex;
+        if (m.shadeMultiplyTexture === T.src || m.shadeMultiplyTexture === T.tex) m.shadeMultiplyTexture = T.tex;
+      }
+    });
+  }
+  // piel: multiplicar el color del material
+  if (skin) {
+    const s = new THREE.Color(skin), ref = new THREE.Color('#f6dcc6');
+    const f = new THREE.Color(Math.min(1.1, s.r / ref.r), Math.min(1.1, s.g / ref.g), Math.min(1.1, s.b / ref.b));
+    for (const m of info.skinMats) {
+      m.color.copy(m.userData.baseColor).multiply(f);
+      if (m.shadeColorFactor && m.userData.baseShade) m.shadeColorFactor.copy(m.userData.baseShade).multiply(f);
+    }
+  }
+}
+
+// Bases del jugador: assets/characters/jugador_m.vrm y jugador_f.vrm
+export function playerColors(p, look) {
+  return { hair: p.hairColor, eyes: p.eyes, skin: p.skin, clothes: look.topColor };
+}
+const baseCache = {};
+export function loadPlayerBase(gender) {
+  const url = `assets/characters/jugador_${gender === 'f' ? 'f' : 'm'}.vrm`;
+  if (!baseCache[url]) baseCache[url] = fetch(url, { method: 'HEAD' }).then((r) => (r.ok ? loadVRMCharacter(url) : null)).catch(() => null);
+  return baseCache[url];
+}
+export function dropPlayerBase(gender) { delete baseCache[`assets/characters/jugador_${gender === 'f' ? 'f' : 'm'}.vrm`]; }

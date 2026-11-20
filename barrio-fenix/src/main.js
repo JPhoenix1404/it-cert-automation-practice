@@ -16,6 +16,7 @@ import { buildInteractables, talkTo, openMenu, buildingOpen, dailyTick } from '.
 import { isNight, hourFloat } from './time.js';
 import { toon } from './toon.js';
 import { MiniMap, openFullMap } from './map.js';
+import { loadPlayerBase, customizeVRM, playerColors } from './vrm.js';
 import { preloadEnv } from './env.js';
 
 const $ = (id) => document.getElementById(id);
@@ -108,11 +109,21 @@ function setupPreview() {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(1.36, 0.05, 8, 48), toon('#ff8a5a', { emissive: '#ff6a2a', emissiveIntensity: 0.6 })); ring.rotation.x = Math.PI / 2; previewScene.add(ring);
   for (let i = 0; i < 30; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), toon('#ffb7cc')); p.position.set((Math.random() - 0.5) * 8, Math.random() * 4, -2 - Math.random() * 3); previewScene.add(p); }
 }
+// Vista previa: base VRoid del género elegido (si existe) teñida con los colores; si no, el modelo procedural
+const previewBases = {};
 function refreshPreview(p) {
-  if (previewCh) { previewScene.remove(previewCh.root); previewCh.dispose(); }
-  previewCh = buildCharacter(resolveLook(p));
-  previewScene.add(previewCh.root);
-  previewCh.root.traverse((m) => { if (m.isMesh) m.castShadow = true; });
+  const base = previewBases[p.gender];
+  if (previewCh && previewCh !== base) { previewScene.remove(previewCh.root); if (!previewCh.isVRM) previewCh.dispose(); }
+  if (previewCh && previewCh.isVRM && previewCh !== base) previewScene.remove(previewCh.root);
+  if (base) {
+    customizeVRM(base, playerColors(p, resolveLook(p)));
+    if (previewCh !== base) { previewScene.add(base.root); base.root.traverse((m) => { if (m.isMesh) m.castShadow = true; }); }
+    previewCh = base;
+  } else {
+    previewCh = buildCharacter(resolveLook(p));
+    previewScene.add(previewCh.root);
+    previewCh.root.traverse((m) => { if (m.isMesh) m.castShadow = true; });
+  }
 }
 
 async function titleScreen() {
@@ -143,6 +154,8 @@ async function creator() {
   const c = $('creator'); c.classList.add('show');
   const p = { name: '', gender: 'm', skin: SKINS[1], hair: 'short', hairColor: HAIR_COLORS[0], eyes: EYES[0], pref: 'women', outfit: { set: 'ini_casual', top: null, bottom: null, shoes: null } };
   setupPreview(); refreshPreview(p);
+  // las bases VRoid del creador se cargan aparte (no son las mismas instancias que usará el juego)
+  for (const g of ['m', 'f']) fetch(`assets/characters/jugador_${g}.vrm`, { method: 'HEAD' }).then((r) => r.ok && import('./vrm.js').then((V) => V.loadVRMCharacter(`assets/characters/jugador_${g}.vrm`))).then((ch) => { if (ch) { previewBases[g] = ch; if (previewScene) { render(); refreshPreview(p); } } }).catch(() => {});
   const body = $('creator-body');
   const render = () => {
     body.innerHTML = '';
@@ -153,7 +166,7 @@ async function creator() {
     row('Sexo', seg([['m', '♂ Hombre'], ['f', '♀ Mujer']], p.gender, (v) => { p.gender = v; p.pref = v === 'm' ? 'women' : 'men'; if (v === 'f' && p.hair === 'short') p.hair = 'long'; if (v === 'm' && p.hair === 'long') p.hair = 'short'; }));
     const sw = (list, cur, on) => { const w = el('div', 'swatches'); for (const col of list) { const b = el('button', `sw${col === cur ? ' on' : ''}`); b.style.background = col; b.onclick = () => { sfx('click'); on(col); render(); refreshPreview(p); }; w.appendChild(b); } return w; };
     row('Piel', sw(SKINS, p.skin, (v) => (p.skin = v)));
-    row('Peinado', seg(HAIRS, p.hair, (v) => (p.hair = v)));
+    if (!previewBases[p.gender]) row('Peinado', seg(HAIRS, p.hair, (v) => (p.hair = v)));
     row('Color de pelo', sw(HAIR_COLORS, p.hairColor, (v) => (p.hairColor = v)));
     row('Ojos', sw(EYES, p.eyes, (v) => (p.eyes = v)));
     row('Ropa', seg(OUTFITS, p.outfit.set, (v) => (p.outfit.set = v)));
