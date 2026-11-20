@@ -4,6 +4,7 @@ import { StaticBatch, toon, canvasTexture, OUTLINE_MAT } from './toon.js';
 import { mergeGeometries } from '../vendor/BufferGeometryUtils.js';
 import { ENV, KitBatch } from './env.js';
 import { texMat, TexBatch, boxUV } from './textures.js';
+import { PROPS, placeProps } from './props.js';
 import { G, clamp, lerp } from './game.js';
 import { skyAt, daylight, hourFloat } from './time.js';
 
@@ -91,6 +92,14 @@ export class World {
     this.buildGround();
     const B = new StaticBatch();
     this.B = B;
+    // árboles con textura de hojas y corteza; cola de props realistas
+    this.leafTB = {
+      sakura: new TexBatch(texMat('leaves_gray', { tint: '#ffb3cc', bright: 1.25, normal: 1.4 }), 1.3),
+      green: new TexBatch(texMat('leaves_gray', { tint: '#7cc860', bright: 1.15, normal: 1.4 }), 1.3),
+      pine: new TexBatch(texMat('leaves_gray', { tint: '#3f8a50', bright: 1.0, normal: 1.4 }), 1.0),
+    };
+    this.barkTB = { sakura: new TexBatch(texMat('sakura_bark'), 1.2), other: new TexBatch(texMat('bark_willow_02'), 1.2) };
+    this.propQ = {};
     this.hedgeTB = new TexBatch(texMat('forest_leaves_02', { tint: '#a8f090', bright: 1.6, normal: 1.2 }), 1.6);
     this.buildHedges(B);
     S.add(this.hedgeTB.build());
@@ -100,10 +109,12 @@ export class World {
     this.buildTrabajo(B);
     this.buildRestaurante(B);
     this.buildSurroundings(B);
+    for (const T of [...Object.values(this.leafTB), ...Object.values(this.barkTB)]) S.add(T.build());
     const stat = B.build();
     stat.name = 'static';
     S.add(stat);
     for (const id of Object.keys(BUILDINGS)) this.buildBuilding(id);
+    if (PROPS.ready) for (const [name, items] of Object.entries(this.propQ)) placeProps(S, name, items);
     this.buildGates();
     this.buildPetals();
     this.buildFeathers();
@@ -236,6 +247,20 @@ export class World {
 
   tree(B, x, z, kind = 'sakura', s = 1, collide = true) {
     const trunk = '#7a5236', o = this.cheap ? { outline: false } : {};
+    if (!this.cheap && this.leafTB) {
+      // versión texturizada: tronco con corteza y copa de hojas
+      this.barkTB[kind === 'sakura' ? 'sakura' : 'other'].geo(new THREE.CylinderGeometry(0.16 * s, 0.3 * s, 2.4 * s, 9), x, 1.2 * s, z);
+      for (const [a, l] of [[0.6, 1.0], [2.7, 0.8], [4.6, 0.9]]) this.barkTB[kind === 'sakura' ? 'sakura' : 'other'].geo(new THREE.CylinderGeometry(0.05 * s, 0.09 * s, l * s, 6), x + Math.cos(a) * 0.35 * s, 2.35 * s, z + Math.sin(a) * 0.35 * s, { rz: Math.cos(a) * -0.7, rx: Math.sin(a) * 0.7 });
+      if (kind === 'pine') {
+        for (let i = 0; i < 4; i++) this.leafTB.pine.geo(new THREE.ConeGeometry((1.9 - i * 0.42) * s, 1.6 * s, 10), x, (2.0 + i * 0.9) * s, z);
+      } else {
+        const T = this.leafTB[kind === 'sakura' ? 'sakura' : 'green'];
+        const blobs = [[0, 3.1, 0, 1.45], [0.95, 2.7, 0.3, 1.05], [-0.95, 2.8, -0.2, 1.1], [0.25, 3.7, -0.5, 0.95], [-0.35, 2.6, 0.95, 0.95], [0.5, 2.9, -0.95, 0.9], [-0.6, 3.5, 0.4, 0.85]];
+        for (const [bx, by, bz, r] of blobs) T.geo(new THREE.IcosahedronGeometry(1, 2), x + bx * s, by * s, z + bz * s, { sx: r * s, sy: r * s * 0.82, sz: r * s, ry: bx * 3 });
+      }
+      if (collide) this.addCircle(x, z, 0.45 * s);
+      return;
+    }
     B.geo(new THREE.CylinderGeometry(0.18 * s, 0.28 * s, 2.2 * s, 7), trunk, x, 1.1 * s, z, o);
     if (kind === 'pine') {
       for (let i = 0; i < 3; i++) B.geo(new THREE.ConeGeometry((1.8 - i * 0.45) * s, 1.8 * s, 8), '#2f7a4a', x, (2.2 + i * 1.1) * s, z, o);
@@ -246,13 +271,26 @@ export class World {
     }
     if (collide) this.addCircle(x, z, 0.45 * s);
   }
+  queueProp(name, x, y, z, ry = 0, s = 1) { (this.propQ[name] = this.propQ[name] || []).push([x, y, z, ry, s]); }
   lamp(B, x, z, collide = true) {
+    if (PROPS.ready && this.fancyLamps) {
+      this.queueProp('street_lamp_01', x, 0, z, Math.atan2(-x, -z) + PI / 2, 1.15);
+      this.lampBulbs.push([x, 4.05, z]);
+      if (collide) this.addCircle(x, z, 0.22);
+      return;
+    }
     B.geo(new THREE.CylinderGeometry(0.07, 0.1, 3.2, 8), '#2e2e38', x, 1.6, z);
     B.geo(new THREE.CylinderGeometry(0.26, 0.18, 0.1, 8), '#2e2e38', x, 3.3, z);
     this.lampBulbs.push([x, 3.12, z]);
     if (collide) this.addCircle(x, z, 0.2);
   }
   bench(B, x, z, ry = 0) {
+    if (PROPS.ready) {
+      this.queueProp('painted_wooden_bench', x, 0, z, ry, 1.65);
+      const w = Math.abs(Math.cos(ry)) > 0.5 ? [1.0, 0.4] : [0.4, 1.0];
+      this.addBox(x - w[0], z - w[1], x + w[0], z + w[1]);
+      return;
+    }
     B.box(2.0, 0.12, 0.6, '#a8703e', x, 0.5, z, ry);
     B.box(2.0, 0.5, 0.1, '#a8703e', x - Math.sin(ry) * 0.28, 0.8, z - Math.cos(ry) * 0.28, ry);
     for (const s of [-0.8, 0.8]) B.box(0.1, 0.5, 0.5, '#3a3a44', x + Math.cos(ry) * s, 0.25, z - Math.sin(ry) * s, ry, { outline: false });
@@ -302,7 +340,13 @@ export class World {
     this.scene.add(fg); this.fenix = fg;
     // bancos, farolas, árboles, tablón, escenario
     this.bench(B, 6.5, 9, 0); this.bench(B, -7.5, -9, PI); this.bench(B, 9.5, 3, -PI / 2); this.bench(B, -9.5, -3, PI / 2);
+    this.fancyLamps = true;
     for (const [x, z] of [[-9, 9], [9, -9], [9, 9], [-9, -9], [-12, 5], [12, -5]]) this.lamp(B, x, z);
+    this.fancyLamps = false;
+    if (PROPS.ready) {
+      for (const [x, z, ry] of [[4.2, 9.1, 0], [8.8, 9.1, 0], [-5.2, -9.1, PI], [-9.8, -9.1, PI]]) { this.queueProp('planter_box_01', x, 0, z, ry, 1.5); this.addBox(x - 0.7, z - 0.35, x + 0.7, z + 0.35); }
+      for (const [x, z] of [[11.2, 7.2], [-11.2, -7.2]]) { this.queueProp('metal_trash_can', x, 0, z, Math.atan2(-x, -z), 0.75); this.addCircle(x, z, 0.6); }
+    }
     for (const [x, z, k] of [[-11.5, 11.5, 'sakura'], [11.5, 11.5, 'sakura'], [11.5, -11.5, 'sakura'], [-11.8, -11.5, 'green']]) this.tree(B, x, z, k, 0.9);
     this.flowers(B, 6, -4.5, 2, 1); this.flowers(B, -5.5, 5.5, 1.2, 1.2, ['#ff6a8a', '#ffb3c6']);
     // tablón del barrio
@@ -366,12 +410,13 @@ export class World {
     for (const [x, z, k] of [[-18, 44, 'sakura'], [18, 44, 'sakura'], [-18, 20, 'green'], [19, 20, 'pine']]) this.tree(B, x, z, k, 0.85);
     // terraza
     for (const [x, z] of [[5.5, 37], [10, 38.5], [14.5, 37], [7.5, 41.5], [13, 41.8]]) {
-      B.geo(new THREE.CylinderGeometry(0.6, 0.6, 0.08, 14), '#f4efe4', x, 0.8, z); B.geo(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6), '#3a3a40', x, 0.4, z, { outline: false });
+      if (PROPS.ready) this.queueProp('outdoor_table_chair_set_01', x, 0.05, z, x * 0.7, 1.3);
+      else { B.geo(new THREE.CylinderGeometry(0.6, 0.6, 0.08, 14), '#f4efe4', x, 0.8, z); B.geo(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 6), '#3a3a40', x, 0.4, z, { outline: false }); }
       B.geo(new THREE.ConeGeometry(1.5, 0.6, 10), x % 2 > 1 ? '#c8443a' : '#f4efe4', x, 2.5, z); B.geo(new THREE.CylinderGeometry(0.04, 0.04, 2.3, 5), '#3a3a40', x, 1.6, z, { outline: false });
       this.addCircle(x, z, 0.7);
     }
     { const pts = []; for (let i = 0; i < 10; i++) { const y = 3.1 - Math.sin((i / 9) * PI) * 0.5; this.lanternPos.push([3 + i * 1.5, y, 34.6]); pts.push(new THREE.Vector3(3 + i * 1.5, y + 0.22, 34.6)); } this.strings.push(pts); }
-    for (const [x, z] of [[5.5, 37], [10, 38.5], [14.5, 37], [7.5, 41.5], [13, 41.8]]) for (const a of [0, 2.1, 4.2]) this.chair(B, x + Math.cos(a) * 1.0, z + Math.sin(a) * 1.0, -a + PI / 2);
+    if (!PROPS.ready) for (const [x, z] of [[5.5, 37], [10, 38.5], [14.5, 37], [7.5, 41.5], [13, 41.8]]) for (const a of [0, 2.1, 4.2]) this.chair(B, x + Math.cos(a) * 1.0, z + Math.sin(a) * 1.0, -a + PI / 2);
     // cine al aire libre
     B.box(8, 4, 0.2, '#f6f6f6', -12, 2.6, 25.5, 0); B.box(8.4, 4.4, 0.15, '#2a2a30', -12, 2.6, 25.4, 0, { outline: false });
     for (const sx of [-4, 4]) B.box(0.25, 4.8, 0.25, '#2a2a30', -12 + sx, 2.4, 25.4, 0);
@@ -641,12 +686,14 @@ export class World {
       I.box(0.6, 0.4, 0.5, '#d8344a', 26.6, 1.3, -9.5, 0);
       box(5, 2.2, 0.5, '#4a3424', 27, 1.1, -12.6);
       for (let i = 0; i < 6; i++) I.geo(new THREE.CylinderGeometry(0.12, 0.1, 0.3, 8), ['#f4f4f4', '#d8b080', '#8a5a3a'][i % 3], 25 + i * 0.8, 2.4, -12.5, { outline: false });
-      for (const [x, z] of [[25.5, -4], [28.5, -4]]) for (const sx of [-0.8, 0.8]) this.chair(I, x + sx, z, sx > 0 ? -PI / 2 : PI / 2);
-      for (const [x, z] of [[25.5, -4], [28.5, -4]]) { I.geo(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 14), '#f4efe4', x, 0.78, z); I.geo(new THREE.CylinderGeometry(0.06, 0.06, 0.78, 6), '#3a3a40', x, 0.39, z, { outline: false }); this.addCircle(x, z, 0.55); }
+      if (PROPS.ready) { for (const [x, z] of [[25.5, -4], [28.5, -4]]) { this.queueProp('coffee_table_round_01', x, 0.13, z, 0, 0.75); for (const sx of [-0.85, 0.85]) this.queueProp('bar_chair_round_01', x + sx, 0.13, z, 0, 1.25); this.addCircle(x, z, 0.55); } }
+      else for (const [x, z] of [[25.5, -4], [28.5, -4]]) for (const sx of [-0.8, 0.8]) this.chair(I, x + sx, z, sx > 0 ? -PI / 2 : PI / 2);
+      if (!PROPS.ready) for (const [x, z] of [[25.5, -4], [28.5, -4]]) { I.geo(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 14), '#f4efe4', x, 0.78, z); I.geo(new THREE.CylinderGeometry(0.06, 0.06, 0.78, 6), '#3a3a40', x, 0.39, z, { outline: false }); this.addCircle(x, z, 0.55); }
       // Oficina
       I.box(9.4, 0.04, 11.6, '#9aa8b8', 35.3, 0.14, -7, 0, { outline: false });
-      const desk = (x, z, big) => { box(big ? 2.6 : 1.8, 0.78, 0.9, big ? '#4a3a30' : '#e8e8ea', x, 0.39, z); I.box(0.8, 0.5, 0.06, '#1e2230', x, 1.05, z - 0.25, 0, { outline: false }); I.box(0.5, 0.5, 0.5, '#2a2a34', x, 0.25, z + 0.8, 0, { outline: false }); };
+      const desk = (x, z, big) => { if (PROPS.ready) { this.queueProp('metal_office_desk', x, 0.13, z, PI, big ? 1.3 : 0.95); this.addBox(x - (big ? 1.3 : 0.9), z - 0.45, x + (big ? 1.3 : 0.9), z + 0.45); } else box(big ? 2.6 : 1.8, 0.78, 0.9, big ? '#4a3a30' : '#e8e8ea', x, 0.39, z); I.box(0.8, 0.5, 0.06, '#1e2230', x, 1.05, z - 0.25, 0, { outline: false }); I.box(0.5, 0.5, 0.5, '#2a2a34', x, 0.25, z + 0.8, 0, { outline: false }); };
       desk(37, -12, true); desk(33, -8.2); desk(35.6, -8.2); desk(38.2, -8.2); desk(33, -4.6); desk(35.6, -4.6);
+      if (PROPS.ready) { this.queueProp('wooden_bookshelf_worn', 31.7, 0.13, -12.5, 0, 1.15); this.addBox(30.9, -12.9, 32.5, -12.1); }
       box(0.6, 1.4, 0.6, '#c0dcff', 39.4, 0.7, -2.2);
       box(1.0, 1.0, 0.7, '#d0d0d4', 31.2, 0.5, -2.0);
       I.box(3, 1.6, 0.06, '#ffffff', 34, 2.0, -12.8, 0, { outline: false });
@@ -660,11 +707,13 @@ export class World {
       box(10.5, 0.9, 0.5, '#8a5a3a', 10, 1.1, 26.3);
       I.box(10.5, 0.06, 0.6, '#d8c8a8', 10, 1.57, 26.3, 0, { outline: false });
       // mesas con velas
+      if (PROPS.ready) for (const [x, z, ry] of [[3.9, 32.3, 0], [16.1, 32.2, 1], [16.2, 27.6, 2]]) { this.queueProp('wine_barrel_01', x, 0.13, z, ry, 1.1); this.addCircle(x, z, 0.5); }
       for (const [x, z] of [[6, 29.6], [10, 29.6], [14, 29.6], [6, 31.8], [10, 31.8]]) {
-        box(1.2, 0.76, 1.2, '#5a3a26', x, 0.38, z);
-        I.box(1.25, 0.03, 1.25, '#f4f0e6', x, 0.78, z, 0, { outline: false });
-        I.geo(new THREE.CylinderGeometry(0.05, 0.05, 0.18, 6), '#fff0c8', x, 0.88, z, { outline: false });
-        for (const sx of [-0.85, 0.85]) this.chair(I, x + sx, z, sx > 0 ? -PI / 2 : PI / 2);
+        if (PROPS.ready) { this.queueProp('dining_table', x, 0.13, z, 0, 0.62); this.addBox(x - 0.7, z - 0.45, x + 0.7, z + 0.45); }
+        else box(1.2, 0.76, 1.2, '#5a3a26', x, 0.38, z);
+        if (!PROPS.ready) I.box(1.25, 0.03, 1.25, '#f4f0e6', x, 0.78, z, 0, { outline: false });
+        I.geo(new THREE.CylinderGeometry(0.05, 0.05, 0.18, 6), '#fff0c8', x, PROPS.ready ? 0.79 : 0.88, z, { outline: false });
+        for (const sx of (PROPS.ready ? [-1.05, 1.05] : [-0.85, 0.85])) this.chair(I, x + sx, z, sx > 0 ? -PI / 2 : PI / 2);
       }
       this.candles = [[6, 29.6], [10, 29.6], [14, 29.6], [6, 31.8], [10, 31.8]];
     }
@@ -834,9 +883,9 @@ export class World {
     this.glow.lanterns.emissiveIntensity = glow * 1.4 + 0.05;
     this.skylineMat.emissiveIntensity = glow * 0.9;
     this.skylineMat.color.setHex(day > 0.5 ? 0xb8c0d0 : 0x3a4060);
-    this.fenixMat.emissiveIntensity = 0.15 + glow * 0.45 + Math.sin(this.time * 2) * 0.05;
+    this.fenixMat.emissiveIntensity = 0.12 + glow * 0.28 + Math.sin(this.time * 2) * 0.04;
     for (const l of this.nightLights) l.intensity = glow * 14;
-    this.poolMat.opacity = glow * 0.75;
+    this.poolMat.opacity = glow * 0.5;
     this.glow.windows.emissiveIntensity = glow * 0.9;
     this.glow.windows.color.setHex(glow > 0.3 ? 0xffe0a0 : 0x9ad0ff);
     // luz cálida de interior cuando el jugador está dentro de un edificio

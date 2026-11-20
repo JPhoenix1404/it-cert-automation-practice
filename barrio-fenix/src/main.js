@@ -18,6 +18,12 @@ import { toon } from './toon.js';
 import { MiniMap, openFullMap } from './map.js';
 import { loadPlayerBase, customizeVRM, playerColors } from './vrm.js';
 import { preloadEnv } from './env.js';
+import { preloadProps } from './props.js';
+import { EffectComposer } from '../vendor/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from '../vendor/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from '../vendor/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from '../vendor/addons/postprocessing/OutputPass.js';
+import { daylight } from './time.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -36,7 +42,19 @@ G.renderer = renderer;
 window.G = G; // útil para depurar desde la consola
 const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.3, 900);
 G.camera = camera;
-window.addEventListener('resize', () => { renderer.setSize(window.innerWidth, window.innerHeight); camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); });
+window.addEventListener('resize', () => { renderer.setSize(window.innerWidth, window.innerHeight); camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); composer?.setSize(window.innerWidth, window.innerHeight); });
+// Resplandor (bloom): farolas, farolillos, ventanas y el fénix brillan de noche
+let composer = null, bloom = null;
+function setupBloom(scene) {
+  if (G.lowQuality) return;
+  composer = new EffectComposer(renderer);
+  composer.setPixelRatio(Math.min(pixelRatio, 1.5));
+  composer.setSize(window.innerWidth, window.innerHeight);
+  composer.addPass(new RenderPass(scene, camera));
+  bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2), 0.6, 0.55, 0.88);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+}
 G.lowQuality = /iPhone|Android/.test(navigator.userAgent);
 
 // ---------------- Retratos ----------------
@@ -191,11 +209,13 @@ let hudT = 0, hoursT = 0, saveT = 0, perfT = 0, perfFrames = 0, insideHome = fal
 
 async function startGame() {
   $('loading').classList.add('show');
-  await preloadEnv();
+  await Promise.all([preloadEnv(), preloadProps()]);
   $('loading').classList.remove('show');
   const scene = new THREE.Scene();
   G.scene = scene;
   G.world = new World(scene);
+  setupBloom(scene);
+  G.forceBloom = () => { G.noBloomAdapt = true; setupBloom(scene); };
   G.player = new Player(scene);
   G.npcs = new NPCManager(scene);
   G.quests = new Quests();
@@ -352,10 +372,12 @@ function loop() {
   perfT += dt; perfFrames++;
   if (perfT > 4) {
     const fps = perfFrames / perfT; perfT = 0; perfFrames = 0;
-    if (fps < 42 && pixelRatio > 1.2) { pixelRatio = Math.max(1.2, pixelRatio - 0.3); renderer.setPixelRatio(pixelRatio); }
+    if (fps < 42 && pixelRatio > 1.2) { pixelRatio = Math.max(1.2, pixelRatio - 0.3); renderer.setPixelRatio(pixelRatio); composer?.setPixelRatio(Math.min(pixelRatio, 1.5)); }
+    else if (fps < 34 && composer && !G.noBloomAdapt) { composer = null; bloom = null; } // sin resplandor si el iPad va justo
     G.fps = fps;
   }
-  renderer.render(G.scene, camera);
+  if (composer) { const night = 1 - daylight(); bloom.strength = 0.1 + night * 0.55; bloom.threshold = 0.93 - night * 0.13; composer.render(); }
+  else renderer.render(G.scene, camera);
   requestAnimationFrame(loop);
 }
 

@@ -1,4 +1,4 @@
 Texturas de Poly Haven (https://polyhaven.com), licencia CC0 1.0 (dominio público).
 leafy_grass, brick_pavement_02, patterned_concrete_pavers_03, asphalt_02, white_stucco,
-grey_roof_tiles, herringbone_parquet, wood_floor, floor_tiles_06, laminate_floor_02, forest_leaves_02.
+grey_roof_tiles, herringbone_parquet, bark_willow_02, sakura_bark (y leaves_gray, derivada de forest_leaves_02), wood_floor, floor_tiles_06, laminate_floor_02, forest_leaves_02.
 Recomprimidas (difuso 1K, normales 512 px).

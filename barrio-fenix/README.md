@@ -44,3 +44,5 @@ Controles de teclado: WASD o flechas para moverte, E o Espacio para interactuar,
 - Personajes 3D: creados con VRoid Studio.
 - Motor: three.js y @pixiv/three-vrm (MIT).
 - Texturas de suelo, caminos, setos, paredes, tejados y suelos interiores: **Poly Haven** (polyhaven.com), licencia CC0.
+- Mobiliario realista (farolas, bancos, jardineras, papeleras, mesas de terraza, escritorios, estantería, mesas de comedor, barriles, mesas y taburetes de café): **Poly Haven**, licencia CC0.
+- Efecto de resplandor nocturno: three.js (UnrealBloomPass, MIT).
