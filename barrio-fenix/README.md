@@ -43,3 +43,4 @@ Controles de teclado: WASD o flechas para moverte, E o Espacio para interactuar,
 - Gato animado de Neko-san: **Vuena**, «Free Low-Poly Animals», licencia CC0.
 - Personajes 3D: creados con VRoid Studio.
 - Motor: three.js y @pixiv/three-vrm (MIT).
+- Texturas de suelo, caminos, setos, paredes, tejados y suelos interiores: **Poly Haven** (polyhaven.com), licencia CC0.

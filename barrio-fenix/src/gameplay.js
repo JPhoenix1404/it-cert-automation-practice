@@ -785,7 +785,7 @@ function tabSettings(box, re) {
   btn('🕒 Sincronizar con la hora real', '', async () => { ui().closePanel(); if (await ui().confirm('¿Volver a la hora real del iPad? El reloj del juego retrocederá.', 'Sincronizar', 'No')) { resetToRealTime(); ui().toast(`Son las ${clockText()}`, '🕒'); } });
   btn('💾 Guardar ahora', '', () => { saveState(); ui().toast('Partida guardada', '💾', 'good'); });
   btn('🗑️ Borrar partida', 'danger', async () => { ui().closePanel(); if (await ui().confirm('¿Borrar la partida? No se puede deshacer.', 'Borrar', 'No') && await ui().confirm('¿Seguro del todo?', 'Sí, borrar', 'No')) { deleteSave(); location.reload(); } });
-  box.appendChild(el('div', 'credits', 'Barrio Fénix · v1.0<br>Personajes y mundo originales. Música original generada con Suno.<br>Modelos de entorno: KayKit by Kay Lousberg (CC0). Gato: Vuena (CC0).<br>Personajes 3D creados con VRoid Studio. Motor: three.js y three-vrm (MIT).'));
+  box.appendChild(el('div', 'credits', 'Barrio Fénix · v1.0<br>Personajes y mundo originales. Música original generada con Suno.<br>Modelos de entorno: KayKit by Kay Lousberg (CC0). Gato: Vuena (CC0). Texturas: Poly Haven (CC0).<br>Personajes 3D creados con VRoid Studio. Motor: three.js y three-vrm (MIT).'));
 }
 
 // ---------------- Eventos diarios ----------------

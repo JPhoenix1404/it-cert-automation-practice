@@ -3,6 +3,7 @@ import * as THREE from '../vendor/three.module.min.js';
 import { StaticBatch, toon, canvasTexture, OUTLINE_MAT } from './toon.js';
 import { mergeGeometries } from '../vendor/BufferGeometryUtils.js';
 import { ENV, KitBatch } from './env.js';
+import { texMat, TexBatch, boxUV } from './textures.js';
 import { G, clamp, lerp } from './game.js';
 import { skyAt, daylight, hourFloat } from './time.js';
 
@@ -90,7 +91,9 @@ export class World {
     this.buildGround();
     const B = new StaticBatch();
     this.B = B;
+    this.hedgeTB = new TexBatch(texMat('forest_leaves_02', { tint: '#a8f090', bright: 1.6, normal: 1.2 }), 1.6);
     this.buildHedges(B);
+    S.add(this.hedgeTB.build());
     this.buildPlaza(B);
     this.buildCasa(B);
     this.buildSuper(B);
@@ -174,24 +177,29 @@ export class World {
       for (let i = 0; i < 1400; i++) { c.fillStyle = Math.random() < 0.5 ? 'rgba(70,140,60,0.25)' : 'rgba(170,220,120,0.25)'; c.fillRect(Math.random() * 256, Math.random() * 256, 2, 3 + Math.random() * 3); }
     });
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(40, 40);
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), toon('#ffffff', { map: tex, unique: true }));
-    ground.rotation.x = -PI / 2; ground.receiveShadow = true;
+    const gGeo = new THREE.PlaneGeometry(600, 600, 1, 1); gGeo.rotateX(-PI / 2); boxUV(gGeo, 5);
+    const ground = new THREE.Mesh(gGeo, texMat('leafy_grass', { tint: '#d8ffc0', bright: 1.45, normal: 0.7 }));
+    ground.receiveShadow = true;
     this.scene.add(ground);
     // Pavimentos
+    // Pavimentos con textura: adoquín en la plaza, losetas en caminos, asfalto en el aparcamiento
+    const plaza = new TexBatch(texMat('brick_pavement_02', { tint: '#ffe8d0', bright: 1.9 }), 2.5);
+    const paths = new TexBatch(texMat('patterned_concrete_pavers_03', { tint: '#fff4e4', bright: 1.25 }), 2.2);
+    const asphalt = new TexBatch(texMat('asphalt_02'), 4);
+    const deck = new TexBatch(texMat('wood_floor', { tint: '#e8c8a0' }), 2.5);
+    const pave = (T, r, y = 0.02) => T.box(r[2] - r[0], 0.04, r[3] - r[1], (r[0] + r[2]) / 2, y, (r[1] + r[3]) / 2);
+    paths.geo(new THREE.CylinderGeometry(13, 13, 0.05, 48), 0, 0.025, 0);
+    plaza.geo(new THREE.TorusGeometry(10.6, 0.7, 4, 64), 0, 0.0, 0, { rx: -PI / 2, sz: 0.06 });
+    plaza.geo(new THREE.CylinderGeometry(5.2, 5.2, 0.06, 48), 0, 0.03, 0);
+    for (const k of ['casaConn', 'superConn', 'trabajoConn', 'restauranteConn']) pave(paths, RECTS[k]);
+    pave(paths, [-46, -4, -18, 4], 0.015); pave(paths, [-28, -4.5, -24, -3.6], 0.03); pave(paths, [-41.5, -4.5, -37.5, -3.6], 0.03);
+    pave(paths, [-4, -46, 4, -18], 0.03); pave(asphalt, [-20, -28, 20, -18], 0.015);
+    pave(paths, [18, -4, 46, 4], 0.015); pave(paths, [22, -1, 34, 10], 0.03);
+    pave(paths, [-4, 18, 4, 46], 0.015); pave(deck, [1, 34, 19, 43], 0.03); pave(paths, [-18, 26, -6, 36], 0.03);
+    for (const T of [plaza, paths, asphalt, deck]) this.scene.add(T.build({ castShadow: false }));
     const B = new StaticBatch();
-    const pave = (r, color, y = 0.02) => B.box(r[2] - r[0], 0.04, r[3] - r[1], color, (r[0] + r[2]) / 2, y, (r[1] + r[3]) / 2, 0, { outline: false });
-    // plaza circular
-    B.geo(new THREE.CylinderGeometry(13, 13, 0.05, 48), '#e9dcc4', 0, 0.025, 0, { outline: false });
-    B.geo(new THREE.CylinderGeometry(9, 9, 0.06, 48), '#dccbb0', 0, 0.03, 0, { outline: false });
-    for (const k of ['casaConn', 'superConn', 'trabajoConn', 'restauranteConn']) pave(RECTS[k], '#d8ccb6');
-    // caminos interiores
-    pave([-46, -4, -18, 4], '#d8ccb6', 0.015); pave([-28, -4.5, -24, -3.6], '#cbbba0', 0.03); pave([-41.5, -4.5, -37.5, -3.6], '#cbbba0', 0.03);
-    pave([-4, -46, 4, -18], '#d8ccb6', 0.03); pave([-20, -28, 20, -18], '#b9b3ad', 0.015);
     for (let x = -18; x <= 18; x += 4) if (Math.abs(x) > 5) B.box(0.15, 0.05, 4, '#f4f0e6', x, 0.05, -21, 0, { outline: false });
-    pave([18, -4, 46, 4], '#d8ccb6', 0.015); pave([22, -1, 34, 10], '#cfc4b0', 0.03);
-    pave([-4, 18, 4, 46], '#d8ccb6', 0.015); pave([1, 34, 19, 43], '#b88a60', 0.03); pave([-18, 26, -6, 36], '#c8bca8', 0.03);
-    const g = B.build({ castShadow: false });
-    this.scene.add(g);
+    this.scene.add(B.build({ castShadow: false }));
   }
 
   buildHedges(B) {
@@ -203,8 +211,8 @@ export class World {
       for (const [g1, g2] of gaps) segs = segs.flatMap(([s, e]) => (g2 <= s || g1 >= e) ? [[s, e]] : [[s, Math.max(s, g1)], [Math.min(e, g2), e]].filter(([p, q]) => q - p > 0.1));
       for (const [s, e] of segs) {
         const len = e - s, mid = (s + e) / 2;
-        if (horiz) { B.box(len, H, T, col, mid, H / 2, z1, 0, { thickness: 0.05 }); this.addBox(s, z1 - T / 2, e, z1 + T / 2); }
-        else { B.box(T, H, len, col, x1, H / 2, mid, 0, { thickness: 0.05 }); this.addBox(x1 - T / 2, s, x1 + T / 2, e); }
+        if (horiz) { this.hedgeTB.box(len, H, T, mid, H / 2, z1); this.addBox(s, z1 - T / 2, e, z1 + T / 2); }
+        else { this.hedgeTB.box(T, H, len, x1, H / 2, mid); this.addBox(x1 - T / 2, s, x1 + T / 2, e); }
       }
     };
     const R = RECTS;
@@ -460,10 +468,13 @@ export class World {
     const W = x2 - x1, D = z2 - z1, cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
     const H = 3.4, T = 0.3, doorW = 2.4;
     const shell = new StaticBatch();
-    shell.box(W, 0.12, D, b.floor, cx, 0.06, cz, 0, { outline: false });
-    shell.box(W, H, T, b.wall, cx, H / 2, z1, 0, { thickness: 0.05 });
-    shell.box(T, H, D, b.wall, x1, H / 2, cz, 0, { thickness: 0.05 });
-    shell.box(T, H, D, b.wall, x2, H / 2, cz, 0, { thickness: 0.05 });
+    const FLOOR = { home: ['herringbone_parquet', '#ffffff'], lucia: ['herringbone_parquet', '#ffffff'], super: ['floor_tiles_06', '#ffffff'], centro: ['laminate_floor_02', '#ffffff'], llama: ['wood_floor', '#f0d8c0'] };
+    const floorTB = new TexBatch(texMat(FLOOR[id][0], { tint: FLOOR[id][1], roughness: 0.7 }), 2.4);
+    floorTB.box(W, 0.12, D, cx, 0.06, cz);
+    this.scene.add(floorTB.build({ castShadow: false }));
+    const wallTB = new TexBatch(texMat('white_stucco', { tint: b.wall }), 2.5);
+    wallTB.box(W, H, T, cx, H / 2, z1); wallTB.box(T, H, D, x1, H / 2, cz); wallTB.box(T, H, D, x2, H / 2, cz);
+    this.scene.add(wallTB.build());
     shell.box(W, 0.35, T + 0.04, darkerHex(b.wall), cx, 0.17, z1, 0, { outline: false });
     this.scene.add(shell.build());
     this.addBox(x1 - T / 2, z1 - T / 2, x2 + T / 2, z1 + T / 2);
@@ -472,9 +483,12 @@ export class World {
     // muro sur con hueco de puerta (forma parte de la "cubierta" que se desvanece)
     const cover = new StaticBatch();
     const dl = b.doorX - doorW / 2, dr = b.doorX + doorW / 2;
-    cover.box(dl - x1, H, T, b.wall, (x1 + dl) / 2, H / 2, z2, 0, { thickness: 0.05 });
-    cover.box(x2 - dr, H, T, b.wall, (dr + x2) / 2, H / 2, z2, 0, { thickness: 0.05 });
-    cover.box(doorW, H - 2.4, T, b.wall, b.doorX, 2.4 + (H - 2.4) / 2, z2, 0, { thickness: 0.05 });
+    const cWallMat = texMat('white_stucco', { tint: b.wall, transparent: true });
+    const cRoofMat = texMat('grey_roof_tiles', { tint: b.roof, transparent: true, normal: 1.4 });
+    const cWall = new TexBatch(cWallMat, 2.5), cRoof = new TexBatch(cRoofMat, 1.6);
+    cWall.box(dl - x1, H, T, (x1 + dl) / 2, H / 2, z2);
+    cWall.box(x2 - dr, H, T, (dr + x2) / 2, H / 2, z2);
+    cWall.box(doorW, H - 2.4, T, b.doorX, 2.4 + (H - 2.4) / 2, z2);
     cover.box(W, 0.35, T + 0.04, darkerHex(b.wall), cx, 0.17, z2, 0, { outline: false });
     // ventanas en fachada
     const winB = new StaticBatch();
@@ -487,13 +501,14 @@ export class World {
     // tejado a dos aguas
     const roofH = 1.8;
     const roofGeo = new THREE.CylinderGeometry(0.01, 1, 1, 4, 1, false, PI / 4);
-    cover.geo(roofGeo, b.roof, cx, H + roofH / 2, cz, { sx: W * 0.78, sy: roofH, sz: D * 0.78, thickness: 0.06 });
+    cRoof.geo(roofGeo, cx, H + roofH / 2, cz, { sx: W * 0.78, sy: roofH, sz: D * 0.78 });
     cover.box(W + 0.6, 0.25, D + 0.6, darkerHex(b.roof), cx, H + 0.05, cz, 0, { thickness: 0.04 });
     this.addBox(x1, z2 - T / 2, dl, z2 + T / 2);
     this.addBox(dr, z2 - T / 2, x2, z2 + T / 2);
     const coverMat = toon('#ffffff', { vc: true, unique: true, transparent: true, opacity: 1 });
     const outMat = OUTLINE_MAT.clone(); outMat.transparent = true;
     const cg = cover.build({ material: coverMat });
+    cg.add(cWall.build()); cg.add(cRoof.build());
     if (cg.userData.outline) cg.userData.outline.material = outMat;
     const wg = winB.build({ material: this.glow.windows, castShadow: false }); cg.add(wg); cg.userData.win = wg;
     // letrero
@@ -515,7 +530,7 @@ export class World {
     door.position.set(b.doorX, 1.2, z2); door.castShadow = true; door.visible = !!b.closed;
     cg.add(door);
     this.scene.add(cg);
-    this.covers[id] = { group: cg, mat: coverMat, out: outMat, opacity: 1, door, doorMat };
+    this.covers[id] = { group: cg, mat: coverMat, out: outMat, opacity: 1, door, doorMat, extra: [cWallMat, cRoofMat] };
     this.doorBlocks[id] = this.addBox(dl, z2 - 0.3, dr, z2 + 0.3); this.doorBlocks[id].off = !b.closed;
     // interior
     const I = new StaticBatch();
@@ -864,6 +879,7 @@ export class World {
       c.opacity += (target - c.opacity) * Math.min(1, dt * 6);
       c.mat.opacity = c.opacity; c.out.opacity = c.opacity;
       c.mat.depthWrite = c.opacity > 0.95;
+      for (const m of c.extra) { m.opacity = c.opacity; m.depthWrite = c.opacity > 0.95; }
       c.group.visible = c.opacity > 0.02;
       if (c.group.userData.sign) c.group.userData.sign.opacity = c.opacity;
       c.doorMat.opacity = c.opacity;
