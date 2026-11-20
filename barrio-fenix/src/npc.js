@@ -6,7 +6,7 @@ import { buildCharacter } from './character.js';
 import { SPOTS, BUILDINGS, zoneAt } from './world.js';
 import { hourFloat, inHours, isNight } from './time.js';
 import { canvasTexture } from './toon.js';
-import { findModel, loadVRMCharacter } from './vrm.js';
+import { findModel, loadVRMCharacter, addAccessories, VRM_ACCESSORIES } from './vrm.js';
 import { ENV, loadCat } from './env.js';
 
 const GATE_PT = { casa: new THREE.Vector3(-16, 0, 0), super: new THREE.Vector3(0, 0, -16), trabajo: new THREE.Vector3(16, 0, 0), restaurante: new THREE.Vector3(0, 0, 16) };
@@ -112,6 +112,7 @@ export class NPC {
     else findModel(id).then((url) => url && loadVRMCharacter(url, { height: this.def.look.height || 1 }).then((ch) => this.useVRM(ch))).catch((e) => console.warn('VRM no disponible para', id, e));
   }
   useVRM(ch) {
+    addAccessories(ch, VRM_ACCESSORIES[this.id]);
     const old = this.ch;
     this.ch = ch; this.hasVRM = true;
     this.scene.add(ch.root);

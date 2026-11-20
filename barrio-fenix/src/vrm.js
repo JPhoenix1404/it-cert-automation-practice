@@ -24,6 +24,35 @@ loader.register((parser) => new VRMLoaderPlugin(parser));
 // Expresiones del juego → expresiones VRM estándar
 const EXPR = { neutral: {}, happy: { happy: 1 }, blush: { happy: 0.6, relaxed: 0.5 }, sad: { sad: 1 }, angry: { angry: 1 }, surprised: { surprised: 1 }, talk: {} };
 
+// Complementos que VRoid no ofrece (barba, cinta), pegados al hueso de la cabeza.
+export const VRM_ACCESSORIES = { goro: ['beard', 'headband'] };
+export function addAccessories(ch, list = []) {
+  const head = ch.vrm.humanoid.getRawBoneNode('head');
+  if (!head || !list.length) return;
+  const toonMat = (c) => new THREE.MeshToonMaterial({ color: c });
+  const g = new THREE.Group();
+  // medidas en metros del modelo original (VRoid ≈ 1,6 m)
+  const fwd = ch.accFwd ?? 0.068, chinY = ch.accChin ?? -0.025;
+  for (const a of list) {
+    if (a === 'beard') {
+      const white = toonMat(0xf2f0ea);
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 12), white);
+      b.scale.set(1.05, 1.25, 0.7); b.position.set(0, chinY - 0.01, fwd - 0.012); g.add(b);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.07, 10), white);
+      tip.rotation.x = Math.PI; tip.position.set(0, chinY - 0.08, fwd - 0.008); g.add(tip);
+      for (const sd of [-1, 1]) { const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.045, 4, 8), white); m.rotation.z = sd * 1.35; m.position.set(sd * 0.02, chinY + 0.03, fwd + 0.006); m.scale.setScalar(0.85); g.add(m); }
+    } else if (a === 'headband') {
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.011, 8, 32), toonMat(0xd8344a));
+      band.rotation.x = Math.PI / 2 - 0.18; band.position.set(0, 0.125, 0.005); g.add(band);
+      const knot = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.07, 6), toonMat(0xd8344a));
+      knot.rotation.x = -2.2; knot.position.set(0.02, 0.1, -0.1); g.add(knot);
+    }
+  }
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  head.add(g);
+  ch.accessories = g;
+}
+
 export async function loadVRMCharacter(url, { height = 1 } = {}) {
   // Cada personaje necesita su propia instancia: se vuelve a parsear (la descarga queda en caché)
   const gltf = await new Promise((res, rej) => loader.load(url, res, undefined, rej));
